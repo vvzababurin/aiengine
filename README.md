@@ -1,2 +1,2 @@
 # aiengine
-Artifical intellect engine
+Artifical Intelligence engine
