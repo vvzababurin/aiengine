@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+aiengine.opensdf
+aiengine.sdf
+aiengine.suo
+
+.vs
+Win32
+ipch
+x64
+x86
+Debug
+Release
+
