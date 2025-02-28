@@ -21,6 +21,7 @@
 void capture_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	SDL_Log("data: %d %d\n", additional_amount, total_amount);
+
 	int avail = SDL_GetAudioStreamAvailable(stream);
 
 	SDL_Log("avail data: %d\n", avail);
@@ -29,6 +30,15 @@ void capture_callback(void *userdata, SDL_AudioStream *stream, int additional_am
 	int read_bytes = SDL_GetAudioStreamData(stream, buf, avail);
 
 	SDL_Log("read data: %d\n", read_bytes);
+
+	int len = read_bytes / 4;
+
+	float* data = (float*)buf;
+
+	for ( int i = 0; i < len; i++ )
+	{
+		if ( data[i] > 0.3f || data[i] < -0.3f ) printf("%f; ", data[i]);
+	}
 
 	free( buf );
 
@@ -59,7 +69,7 @@ int main(int argc, char* argv[])
 		for ( int i = 0; i < count; i++ )
 		{
 			const char* deviceName = SDL_GetAudioDeviceName( audioDevices[i] );
-			SDL_Log( "Device id: %d ( %s )\n", audioDevices[i], SDL_iconv_utf8_locale( deviceName ) );
+			SDL_Log( "DeviceId: %d ( %s )\n", audioDevices[i], SDL_iconv_utf8_locale( deviceName ) );
 		}
 
 		SDL_AudioSpec spec;
@@ -67,9 +77,9 @@ int main(int argc, char* argv[])
 
 		SDL_memset(&spec, 0, sizeof(spec));
 		spec.format = SDL_AUDIO_F32;
-		spec.channels = 2;
+		spec.channels = 1;
 		spec.freq = 44100;
-
+	
 		stream = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, capture_callback, NULL );
 		if (stream == NULL) {
 			SDL_Log("Failed to open audio: %s", SDL_GetError());
