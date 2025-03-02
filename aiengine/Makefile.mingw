@@ -1,0 +1,4 @@
+all:
+	g++ aiengine.cpp -w -o aiengine.exe -lSDL3
+clean:
+	rm aiengine.exe

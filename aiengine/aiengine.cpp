@@ -229,9 +229,9 @@ void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_am
 
 		bool pull_result = FreeQueuePull(queue, data, additional_amount / sizeof(float));
 		if (pull_result) {
-            SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
+			SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
 		} else {
-            // SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePull failed\n");			
+			// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePull failed\n");			
 		}
 
 		free( data[0] );
@@ -248,13 +248,14 @@ void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amo
 	if ( SDL_TryLockMutex( mutex ) ) 
 	{
 		float* data[channel_count];
+
 		data[0] = (float*)malloc(additional_amount);
 
 		int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
 		if (read_bytes > 0) {
 			bool push_result = FreeQueuePush(queue, data, read_bytes / sizeof(float));
 			if ( !push_result ) {
-				SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePush failed\n");
+				// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePush failed\n");
 			}
 		}
 
@@ -262,7 +263,7 @@ void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amo
 
 		SDL_UnlockMutex( mutex );
 	} else {
-		//SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
+		// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
 	}
 }
 
@@ -286,7 +287,7 @@ int main(int argc, char* argv[])
 	mutex = SDL_CreateMutex();
 	if ( !mutex ) 
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create mutex: ( %s )\n", SDL_GetError() );
+		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Couldn't create mutex: ( %s )\n", SDL_GetError() );
 		return -1;
 	}
 
@@ -294,7 +295,7 @@ int main(int argc, char* argv[])
 	if ( audioDevices == NULL ) 
 	{
 		// TODO: fatal crash
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
+		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
 		return -1;
 	} else {
 		for ( int i = 0; i < count; i++ )
@@ -316,7 +317,7 @@ int main(int argc, char* argv[])
 		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, CaptureCallback, NULL );
 		if (capture == NULL) 
 		{
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			SDL_ResumeAudioStreamDevice( capture ); 
 		}
@@ -324,7 +325,7 @@ int main(int argc, char* argv[])
 		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, PlaybackCallback, NULL );
 		if ( playback == NULL )
 		{
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
