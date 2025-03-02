@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
 		SDL_AudioStream * capture = NULL;
 		SDL_AudioStream * playback = NULL;
 
-		SDL_memset( &spec, 0, sizeof(spec));
+		SDL_memset( &spec, 0, sizeof(spec) );
 
 		spec.format = SDL_AUDIO_F32;
 		spec.channels = channel_count;
@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
-		SDL_Delay( 10000 ); 
+		SDL_Delay( 10000 );
 		PrintQueueInfo( queue );
 
 		SDL_DestroyAudioStream( capture );
