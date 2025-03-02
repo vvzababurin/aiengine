@@ -147,7 +147,8 @@ bool FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length)
 
 void *GetFreeQueuePointers( struct FreeQueue* queue, char* data ) 
 {
-  if ( queue != nullptr ) {
+  if ( queue != nullptr ) 
+  {
     if (strcmp(data, "buffer_length") == 0) {
       return ( void* )&queue->buffer_length;
     }
@@ -227,10 +228,10 @@ void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_am
 		data[0] = (float*)malloc(additional_amount);
 
 		bool pull_result = FreeQueuePull(queue, data, additional_amount / sizeof(float));
-		if (!pull_result) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePush failed\n");
+		if (pull_result) {
+            SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
 		} else {
-			SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
+            // SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePull failed\n");			
 		}
 
 		free( data[0] );
@@ -315,7 +316,7 @@ int main(int argc, char* argv[])
 		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, CaptureCallback, NULL );
 		if (capture == NULL) 
 		{
-			SDL_Log( "Failed to open audio: %s\n", SDL_GetError() );
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			SDL_ResumeAudioStreamDevice( capture ); 
 		}
@@ -323,7 +324,7 @@ int main(int argc, char* argv[])
 		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, PlaybackCallback, NULL );
 		if ( playback == NULL )
 		{
-			SDL_Log( "Failed to open audio: %s\n", SDL_GetError() );
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
