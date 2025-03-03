@@ -43,6 +43,9 @@ x86
 Debug
 Release
 
+aiengine/x64
+aiengine/x86
+
 aiengine/Debug
 aiengine/Release
 
