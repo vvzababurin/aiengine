@@ -33,24 +33,24 @@ const size_t data_freq = 44100;
 
 void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-//	if ( SDL_LockMutex( mutex ) ) 
+//	if ( SDL_TryLockMutex( mutex ) ) 
 //	{
-		SDL_LockMutex( mutex );
+	SDL_LockMutex( mutex );
 
-		float* data[channels_count];
+	float* data[channels_count];
 
-		data[0] = (float*)malloc(additional_amount);
+	data[0] = (float*)malloc(additional_amount);
 
-		bool pull_result = FreeQueuePull(queue, data, additional_amount / sizeof(float));
-		if (pull_result) {
-			SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
-		} else {
-			// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePull failed\n");			
-		}
+	bool pull_result = FreeQueuePull(queue, data, additional_amount / sizeof(float));
+	if (pull_result) {
+		SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
+	} else {
+		// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePull failed\n");			
+	}
 
-		free( data[0] );
+	free( data[0] );
 
-		SDL_UnlockMutex( mutex );
+	SDL_UnlockMutex( mutex );
 //	} else {
 		//SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
 //	}
@@ -59,25 +59,25 @@ void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_am
 
 void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-//	if ( SDL_LockMutex( mutex ) ) 
+//	if ( SDL_TryLockMutex( mutex ) ) 
 //	{
-		SDL_LockMutex( mutex );
+	SDL_LockMutex( mutex );
 
-		float* data[channels_count];
+	float* data[channels_count];
 
-		data[0] = (float*)malloc(additional_amount);
+	data[0] = (float*)malloc(additional_amount);
 
-		int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
-		if (read_bytes > 0) {
-			bool push_result = FreeQueuePush(queue, data, read_bytes / sizeof(float));
-			if ( !push_result ) {
-				// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePush failed\n");
-			}
+	int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
+	if (read_bytes > 0) {
+		bool push_result = FreeQueuePush(queue, data, read_bytes / sizeof(float));
+		if ( !push_result ) {
+			// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FreeQueuePush failed\n");
 		}
+	}
 
-		free( data[0] );
+	free( data[0] );
 
-		SDL_UnlockMutex( mutex );
+	SDL_UnlockMutex( mutex );
 //	} else {
 		// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
 //	}
