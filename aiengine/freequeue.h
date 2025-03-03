@@ -1,18 +1,14 @@
+
+#pragma once
+
+#ifndef __AIENGINE_FREEQUEUE__
+#define __AIENGINE_FREEQUEUE__
+
 #include <atomic>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-
-#ifdef _WIN32
-
-#include <io.h>
-#include <windows.h>
-#include <winnls.h>
-#include <conio.h>
-#include <fcntl.h>
-
-#endif
 
 struct FreeQueue {
   uint32_t buffer_length;
@@ -34,3 +30,4 @@ bool FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length);
 bool FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length);
 void PrintQueueInfo(struct FreeQueue *queue);
 
+#endif // __AIENGINE_FREEQUEUE__

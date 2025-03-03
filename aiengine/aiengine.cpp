@@ -3,8 +3,6 @@
 
 #include "stdafx.h"
 
-#include <atomic>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -107,7 +105,6 @@ int main(int argc, char* argv[])
 	SDL_AudioDeviceID * audioDevices = SDL_GetAudioRecordingDevices( &count );
 	if ( audioDevices == NULL ) 
 	{
-		// TODO: fatal crash
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
 		return -1;
 	} else {

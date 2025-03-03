@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+
 #include "freequeue.h"
 
 uint32_t _getAvailableRead(
