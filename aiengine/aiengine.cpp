@@ -21,6 +21,7 @@
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_mutex.h>
 
 #include "freequeue.h"
 
@@ -32,8 +33,10 @@ const size_t data_freq = 44100;
 
 void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-	if ( SDL_TryLockMutex( mutex ) ) 
-	{
+//	if ( SDL_LockMutex( mutex ) ) 
+//	{
+		SDL_LockMutex( mutex );
+
 		float* data[channels_count];
 
 		data[0] = (float*)malloc(additional_amount);
@@ -48,16 +51,18 @@ void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_am
 		free( data[0] );
 
 		SDL_UnlockMutex( mutex );
-	} else {
+//	} else {
 		//SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
-	}
+//	}
 
 }
 
 void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-	if ( SDL_TryLockMutex( mutex ) ) 
-	{
+//	if ( SDL_LockMutex( mutex ) ) 
+//	{
+		SDL_LockMutex( mutex );
+
 		float* data[channels_count];
 
 		data[0] = (float*)malloc(additional_amount);
@@ -73,9 +78,9 @@ void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amo
 		free( data[0] );
 
 		SDL_UnlockMutex( mutex );
-	} else {
+//	} else {
 		// SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Mutex is locked on another thread\n");
-	}
+//	}
 }
 
 int main(int argc, char* argv[])
