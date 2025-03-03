@@ -29,14 +29,14 @@
 SDL_Mutex *mutex;
 struct FreeQueue* queue;
 
-const size_t channel_count = 1;
+const size_t channels_count = 1;
 const size_t data_freq = 44100;
 
 void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	if ( SDL_TryLockMutex( mutex ) ) 
 	{
-		float* data[channel_count];
+		float* data[channels_count];
 
 		data[0] = (float*)malloc(additional_amount);
 
@@ -60,7 +60,7 @@ void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amo
 {
 	if ( SDL_TryLockMutex( mutex ) ) 
 	{
-		float* data[channel_count];
+		float* data[channels_count];
 
 		data[0] = (float*)malloc(additional_amount);
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
 	SetConsoleOutputCP(1251);
 #endif
 
-	queue = CreateFreeQueue(data_freq * 10, channel_count);
+	queue = CreateFreeQueue(data_freq * 10, channels_count);
 
 	SDL_Init(SDL_INIT_AUDIO);
 
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 		SDL_memset( &spec, 0, sizeof(spec) );
 
 		spec.format = SDL_AUDIO_F32;
-		spec.channels = channel_count;
+		spec.channels = channels_count;
 		spec.freq = data_freq;
 	
 		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, CaptureCallback, NULL );
