@@ -31,9 +31,9 @@
 *.out
 *.app
 
-aiengine.opensdf
-aiengine.sdf
-aiengine.suo
+/aiengine.opensdf
+/aiengine.sdf
+/aiengine.suo
 
 .vs
 Win32
