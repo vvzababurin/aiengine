@@ -24,10 +24,11 @@ enum FreeQueueState {
   WRITE = 1
 };
 
-struct FreeQueue *CreateFreeQueue(uint32_t length, uint32_t channel_count);
-void DestroyFreeQueue(struct FreeQueue *queue);
-bool FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length);
-bool FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length);
-void PrintQueueInfo(struct FreeQueue *queue);
+struct FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count);
+void FQ_DestroyFreeQueue(struct FreeQueue *queue);
+bool FQ_FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length);
+bool FQ_FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length);
+void FQ_PrintQueueInfo(struct FreeQueue *queue);
+void FQ_PrintQueueAddresses(struct FreeQueue *queue);
 
 #endif // __AIENGINE_FREEQUEUE__

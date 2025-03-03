@@ -28,7 +28,7 @@ uint32_t _getAvailableWrite(
   return read_index - write_index - 1;
 }
 
-struct FreeQueue *CreateFreeQueue(uint32_t length, uint32_t channel_count) 
+struct FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count) 
 {
   struct FreeQueue *queue = (struct FreeQueue *)malloc(sizeof(struct FreeQueue));
   queue->buffer_length = length + 1;
@@ -48,7 +48,7 @@ struct FreeQueue *CreateFreeQueue(uint32_t length, uint32_t channel_count)
   return queue;
 }
 
-void DestroyFreeQueue(struct FreeQueue *queue) 
+void FQ_DestroyFreeQueue(struct FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {
@@ -62,7 +62,7 @@ void DestroyFreeQueue(struct FreeQueue *queue)
   }
 }
 
-bool FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length) 
+bool FQ_FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length) 
 {
   if ( queue != nullptr ) 
   {
@@ -87,7 +87,7 @@ bool FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length)
   return false;
 }
 
-bool FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length) 
+bool FQ_FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length) 
 {
   if ( queue != nullptr ) 
   {
@@ -132,7 +132,7 @@ void *GetFreeQueuePointers( struct FreeQueue* queue, char* data )
   return 0;
 }
 
-void PrintQueueInfo(struct FreeQueue *queue) 
+void FQ_PrintQueueInfo(struct FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {
@@ -157,7 +157,7 @@ void PrintQueueInfo(struct FreeQueue *queue)
   }
 }
 
-void PrintQueueAddresses(struct FreeQueue *queue) 
+void FQ_PrintQueueAddresses(struct FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {
