@@ -22,6 +22,9 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_render.h>
 
 #include "freequeue.h"
 
@@ -61,9 +64,18 @@ void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amo
 	SDL_UnlockMutex( mutex );
 }
 
+void RenderCallback(SDL_Renderer* renderer)
+{
+	SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+	SDL_RenderClear(renderer);
+	//SDL_RenderTexture(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+}
+
 int main(int argc, char* argv[])
 {
 	int count = 0;
+	bool done = false;
 
 #ifdef _WIN32
 	_setmode(_fileno(stdout), _O_TEXT);
@@ -76,7 +88,7 @@ int main(int argc, char* argv[])
 
 	queue = FQ_CreateFreeQueue(data_freq * 10, channels_count);
 
-	SDL_Init(SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
 
 	mutex = SDL_CreateMutex();
 	if ( !mutex ) 
@@ -123,7 +135,27 @@ int main(int argc, char* argv[])
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
-		SDL_Delay( 10000 );
+		SDL_Window* wnd = NULL;
+		SDL_Renderer* renderer = NULL;
+
+		bool result = SDL_CreateWindowAndRenderer( "An SDL3 window", 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &wnd, &renderer );
+
+		while (!done) 
+		{
+			SDL_Event event;
+
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_EVENT_QUIT) {
+					done = true;
+				}
+			}
+
+			RenderCallback(renderer);
+		}
+
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(wnd);
+
 		FQ_PrintQueueInfo( queue );
 
 		SDL_DestroyAudioStream( capture );
@@ -131,6 +163,8 @@ int main(int argc, char* argv[])
 
 		SDL_DestroyMutex( mutex );
 		FQ_DestroyFreeQueue( queue );
+
+		SDL_Quit();
 	}
 
 	return 0;
