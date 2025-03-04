@@ -1,4 +1,4 @@
 all:
-	g++ aiengine.cpp freequeue.cpp -w -o aiengine -lSDL3
+	g++ aiengine.cpp freequeue.cpp -mwindows -w -o aiengine -lSDL3
 clean:
 	rm aiengine

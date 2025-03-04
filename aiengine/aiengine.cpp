@@ -34,6 +34,9 @@ struct FreeQueue* queue;
 const size_t channels_count = 1;
 const size_t data_freq = 44100;
 
+int window_width = 800;
+int window_height = 600;
+
 void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	SDL_LockMutex( mutex );
@@ -68,6 +71,12 @@ void RenderCallback(SDL_Renderer* renderer)
 {
 	SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 	SDL_RenderClear(renderer);
+
+	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+
+	SDL_RenderLine(renderer, (float)0, (float)window_height / 2, (float)window_width, (float)window_height / 2);
+	SDL_RenderLine(renderer, (float)window_width / 2, (float)0, (float)window_width / 2, (float)window_height);
+
 	//SDL_RenderTexture(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
 }
@@ -102,7 +111,9 @@ int main(int argc, char* argv[])
 	{
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
 		return -1;
-	} else {
+	} 
+	else 
+	{
 		for ( int i = 0; i < count; i++ )
 		{
 			const char* deviceName = SDL_GetAudioDeviceName( audioDevices[i] );
@@ -123,7 +134,9 @@ int main(int argc, char* argv[])
 		if (capture == NULL) 
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
-		} else {
+		} 
+		else
+		{
 			SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
@@ -131,22 +144,32 @@ int main(int argc, char* argv[])
 		if ( playback == NULL )
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
-		} else {
+		}
+		else 
+		{
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
 		SDL_Window* wnd = NULL;
 		SDL_Renderer* renderer = NULL;
 
-		bool result = SDL_CreateWindowAndRenderer( "An SDL3 window", 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &wnd, &renderer );
+		bool result = SDL_CreateWindowAndRenderer( "An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &wnd, &renderer );
 
-		while (!done) 
+		//SDL_SyncWindow(wnd);
+
+		while ( !done ) 
 		{
 			SDL_Event event;
 
-			while (SDL_PollEvent(&event)) {
-				if (event.type == SDL_EVENT_QUIT) {
+			while ( SDL_PollEvent(&event) ) 
+			{
+				if (event.type == SDL_EVENT_QUIT) 
+				{
 					done = true;
+				} 
+				else if (event.type == SDL_EVENT_WINDOW_RESIZED) 
+				{
+					SDL_GetWindowSizeInPixels( wnd, &window_width, &window_height );
 				}
 			}
 
