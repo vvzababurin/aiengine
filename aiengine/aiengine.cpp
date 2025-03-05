@@ -221,12 +221,12 @@ int main(int argc, char* argv[])
 			
 		// thread = SDL_CreateThread( ThreadCallback, "", NULL );
 
-		bool result = SDL_CreateWindowAndRenderer("An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL, &wnd, &renderer);
+		bool result = SDL_CreateWindowAndRenderer("An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &wnd, &renderer);
 		if (result == false) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError());
 		}
 
-		text_engine = TTF_CreateRendererTextEngine(renderer);
+		text_engine = TTF_CreateRendererTextEngine( renderer );
 
 		small_font = TTF_OpenFont("./fonts/segoeui.ttf", 8);
 		big_font = TTF_OpenFont("./fonts/segoeui.ttf", 12);
