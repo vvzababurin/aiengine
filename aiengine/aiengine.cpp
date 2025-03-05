@@ -26,6 +26,7 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_thread.h>
+#include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "freequeue.h"
@@ -40,6 +41,7 @@ const size_t channels_count = 1;
 const size_t data_freq = 44100;
 
 SDL_Mutex* mutex;
+SDL_Texture* buttons_texture;
 // SDL_Texture* texture;
 
 int window_width = 800;
@@ -119,28 +121,30 @@ SDL_FRect WMC_DrawText(SDL_Renderer* renderer, TTF_Font* font, const char* text,
 
 void WMC_RenderCallback(SDL_Renderer* renderer)
 {
-	SDL_Texture* t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, window_width, window_height);
-	SDL_SetRenderTarget(renderer, t);
-
-	SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
-	SDL_RenderClear(renderer);
-
 	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 
 	SDL_RenderLine(renderer, .0f, (float)window_height / 2.0f, (float)window_width, (float)window_height / 2.0f);
 	SDL_RenderLine(renderer, (float)window_width / 2.0f, .0f, (float)window_width / 2.0f, (float)window_height);
 
-	SDL_Color fg = {0, 0, 0, 255 };
+	SDL_Color fg = { 0, 0, 0, 255 };
 	SDL_Color bg = { 255, 255, 255, 255 };
 
 	WMC_DrawText(renderer, small_font, "const char* text", 20.0f, 20.0f, fg, bg);
 	WMC_DrawText(renderer, big_font, "test", 40.0f, 40.0f, fg, bg);
 
-	SDL_SetRenderTarget(renderer, NULL);
-	SDL_RenderTexture(renderer, t, NULL, NULL);
+	SDL_FRect rect = { 0, 0, 0, 0 };
 
-	SDL_RenderPresent(renderer);
-	SDL_DestroyTexture(t);
+	float w;
+	float h;
+	SDL_GetTextureSize(buttons_texture, &w, &h);
+
+	rect.x = window_width - (w + 8);
+	rect.y = 8;
+	rect.w = w;
+	rect.h = h;
+
+	SDL_RenderTexture(renderer, buttons_texture, NULL, &rect);
+
 }
 
 int main(int argc, char* argv[])
@@ -219,12 +223,51 @@ int main(int argc, char* argv[])
 		SDL_Renderer* renderer = NULL;
 		SDL_Thread* thread = NULL;
 			
-		// thread = SDL_CreateThread( ThreadCallback, "", NULL );
+		// thread = SDL_CreateThread( WNC_ThreadCallback, "", NULL );
 
-		bool result = SDL_CreateWindowAndRenderer("An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &wnd, &renderer);
-		if (result == false) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindowAndRenderer failed: %s\n", SDL_GetError());
+		wnd = SDL_CreateWindow("An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS );
+		if (!wnd) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow failed: %s\n", SDL_GetError());
+			return -1;
 		}
+
+		renderer = SDL_CreateRenderer(wnd, NULL);
+		if (!renderer) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
+			return -1;
+		}
+
+		SDL_Surface* buttons = IMG_Load("./external_images/buttons.png");
+		if (!buttons) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "IMG_Load failed: %s\n", SDL_GetError());
+		}
+
+		buttons_texture = SDL_CreateTextureFromSurface(renderer, buttons);
+		if (!buttons_texture) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateTextureFromSurface failed: %s\n", SDL_GetError());
+		}
+
+		SDL_DestroySurface(buttons);
+
+		int top = 0;
+		int left = 0;
+		int bottom = 0;
+		int right = 0;
+
+		// SDL_GetRenderOutputSize(renderer, &window_width, &window_height);
+
+		SDL_SetWindowResizable(wnd, true);
+		SDL_SetWindowBordered(wnd, true);
+
+		bool border_result = SDL_GetWindowBordersSize(wnd, &top, &left, &bottom, &right);
+		if (!border_result) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GetWindowBordersSize failed: %s\n", SDL_GetError());
+		}
+
+//		bool presentation_result = SDL_SetRenderLogicalPresentation(renderer, window_width, window_height, SDL_LOGICAL_PRESENTATION_DISABLED);
+//		if (!presentation_result){
+//			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetRenderLogicalPresentation failed: %s\n", SDL_GetError());
+//		}
 
 		text_engine = TTF_CreateRendererTextEngine( renderer );
 
@@ -235,21 +278,43 @@ int main(int argc, char* argv[])
 		{
 			SDL_Event event;
 
-			while ( SDL_PollEvent(&event) ) 
+			SDL_PollEvent(&event);
+			
+			switch (event.type)
 			{
-				if (event.type == SDL_EVENT_QUIT) 
+				case SDL_EVENT_QUIT:
 				{
 					done = true;
 					break;
-				} 
-				else if (event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
+				}
+				case SDL_EVENT_WINDOW_RESIZED:
 				{
-					// SDL_GetWindowSize(wnd, &window_width, &window_height);
+					SDL_Rect rect = { 0,0,0,0 };
+
+					SDL_ConvertEventToRenderCoordinates(renderer, &event);
+
+					//SDL_RenderCoordinatesFromWindow(0,0, );
+
+					window_width = event.display.data1;
+					window_height = event.display.data2;
+
+
+
+					// window_width = window_width + left + right;
+					// window_height = window_height + top + bottom;
+
+					// rect.x = left;
+					// rect.y = top;
+					// rect.w = window_width + right;
+					// rect.h = window_height + bottom;
+
+					// SDL_SetRenderViewport(renderer, &rect);
+
 					// SDL_SetWindowSize(wnd, window_width, window_height);
 
 					// SDL_Surface* surface = SDL_GetWindowSurface(wnd);
 					// SDL_BlitSurface(image, NULL, surface, NULL);
-	
+
 					// SDL_Palette* palette = SDL_GetSurfacePalette(surface);
 					// const SDL_PixelFormatDetails* format = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_ARGB8888);
 
@@ -261,7 +326,11 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+
+			SDL_RenderClear( renderer );
 			WMC_RenderCallback( renderer );
+			SDL_RenderPresent( renderer );
 		}
 
 		SDL_DestroyRenderer( renderer );
@@ -270,6 +339,8 @@ int main(int argc, char* argv[])
 		TTF_CloseFont( big_font );
 		TTF_CloseFont( small_font );
 		TTF_DestroyRendererTextEngine( text_engine );
+
+		SDL_DestroyTexture(buttons_texture);
 
 		FQ_PrintQueueInfo( queue );
 
