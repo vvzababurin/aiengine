@@ -55,7 +55,7 @@ int WMC_ThreadCallback(void* data)
 	return 0;
 }
 
-void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
+void WMC_PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	SDL_LockMutex( mutex );
 
@@ -70,7 +70,7 @@ void PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additional_am
 	SDL_UnlockMutex( mutex );
 }
 
-void CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
+void WMC_CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
 	SDL_LockMutex( mutex );
 
@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
 		spec.channels = channels_count;
 		spec.freq = data_freq;
 	
-		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, CaptureCallback, NULL );
+		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, WMC_CaptureCallback, NULL );
 		if (capture == NULL) 
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 			SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
-		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, PlaybackCallback, NULL );
+		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, WMC_PlaybackCallback, NULL );
 		if ( playback == NULL )
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
@@ -228,8 +228,8 @@ int main(int argc, char* argv[])
 
 		text_engine = TTF_CreateRendererTextEngine( renderer );
 
-		small_font = TTF_OpenFont("./fonts/segoeui.ttf", 8);
-		big_font = TTF_OpenFont("./fonts/segoeui.ttf", 12);
+		small_font = TTF_OpenFont("./external_fonts/segoeui.ttf", 8);
+		big_font = TTF_OpenFont("./external_fonts/segoeui.ttf", 12);
 
 		while ( !done ) 
 		{
