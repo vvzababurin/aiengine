@@ -51,14 +51,19 @@ float height_buttons_texture = 0.0f;
 int window_width = 800;
 int window_height = 600;
 
-float capture_mouse_xxx = 0.0f;
-float capture_mouse_yyy = 0.0f;
-int button_mouse_id = -1;
+float coord_capture_mouse_xxx = 0.0f;
+float coord_capture_mouse_yyy = 0.0f;
 
-int button_1 = -1;
-int button_2 = -1;
-int button_3 = -1;
-int button_4 = -1;
+int button_down_mouse_id = -1;
+int button_up_mouse_id = -1;
+
+#define STATE_BUTTON_NORMAL		0x00
+#define STATE_BUTTON_ENTER		0x01
+#define STATE_BUTTON_DISABLED	0x02
+#define STATE_BUTTON_CLICK		0x04
+#define STATE_BUTTON_DBLCLICK	0x08
+
+unsigned int buttons[4] = { STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL };
 
 int WMC_ThreadCallback(void* data)
 {
@@ -127,12 +132,46 @@ SDL_FRect WMC_DrawText(SDL_Renderer* renderer, TTF_Font* font, const char* text,
 	return SDL_FRect();
 }
 
+void WMC_SetMouseButtonState(int nState, unsigned int uiButton)
+{
+	buttons[uiButton] = nState;
+}
+
+unsigned int WMC_GetMouseButtonState(unsigned int uiButton)
+{
+	return buttons[uiButton];
+}
+
 bool WMC_IsInRect( SDL_FRect* r, float x, float y )
 {
-	if ( ( x >= r->x) && ( x <= ( r->x + r->w ) ) && ( y >= r->y ) && ( y <= ( r->y + r->h ) ) ) {
+	if ( ( x >= r->x) && 
+		( x <= ( r->x + r->w ) ) && 
+		( y >= r->y ) && 
+		( y <= ( r->y + r->h ) ) ) 
+	{
 		return true;
 	} else {
 		return false;
+	}
+}
+
+void WMC_MouseButtonClick( unsigned int uiButton )
+{
+	if (uiButton == 0) {
+		SDL_Log("WMC_ButtonPauseCallback: Mouse Up click button_1");
+	} else if (uiButton == 1) {
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if (nState & STATE_BUTTON_DISABLED) {
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, uiButton);			
+		} else {
+			WMC_SetMouseButtonState(STATE_BUTTON_DISABLED, uiButton);
+			WMC_SetMouseButtonState(STATE_BUTTON_DISABLED, 3);
+		}
+		SDL_Log("WMC_ButtonPlayCallback: Mouse Up click button_2");
+	} else if (uiButton == 2) {
+		SDL_Log("WMC_ButtonStopCallback: Mouse Up click button_3");
+	} else if (uiButton == 3) {
+		SDL_Log("WMC_ButtonRecordCallback: Mouse Up click button_4");
 	}
 }
 
@@ -145,47 +184,62 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.w = 52;
 	rect.h = 52;
 
-	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
-		button_1 = 1;
-		if (button_mouse_id == 1) {
-			button_mouse_id = -1;
-			SDL_Log("Mouse click button_1");
-		}
+	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+		int nState = WMC_GetMouseButtonState(0);
+		if ( ( button_up_mouse_id ) == 1 && !(nState & STATE_BUTTON_DISABLED))
+			WMC_MouseButtonClick(0);
+		button_up_mouse_id = -1;
+		nState = WMC_GetMouseButtonState(0);
+		nState = nState | STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 0);
 	} else {
-		button_1 = -1;
+		int nState = WMC_GetMouseButtonState(0);
+		nState = nState &~ STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 0);
+	}
+	
+	rect.x = rect.x + rect.w + 1;
+	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+		int nState = WMC_GetMouseButtonState(1);
+		if ( ( button_up_mouse_id == 1 ) && !( nState & STATE_BUTTON_DISABLED ) )
+			WMC_MouseButtonClick(1);
+		button_up_mouse_id = -1;
+		nState = WMC_GetMouseButtonState(1);
+		nState = nState | STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 1);
+	} else {
+		int nState = WMC_GetMouseButtonState(1);
+		nState = nState & ~STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 1);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
-		button_2 = 1;
-		if (button_mouse_id == 1) {
-			button_mouse_id = -1;
-			SDL_Log("Mouse click button_2");
-		}
+	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+		int nState = WMC_GetMouseButtonState(2);
+		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
+			WMC_MouseButtonClick(2);
+		button_up_mouse_id = -1;
+		nState = WMC_GetMouseButtonState(2);
+		nState = nState | STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 2);
+	} else {
+		int nState = WMC_GetMouseButtonState(2);
+		nState = nState & ~STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 2);
 	}
-	else {
-		button_2 = -1;
-	}
+
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
-		button_3 = 1;
-		if (button_mouse_id == 1) {
-			button_mouse_id = -1;
-			SDL_Log("Mouse click button_3");
-		}
-	}
-	else {
-		button_3 = -1;
-	}
-	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
-		button_4 = 1;
-		if (button_mouse_id == 1) {
-			button_mouse_id = -1;
-			SDL_Log("Mouse click button_4");
-		}
-	}
-	else {
-		button_4 = -1;
+	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+		int nState = WMC_GetMouseButtonState(3);
+		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
+			WMC_MouseButtonClick(3);
+		button_up_mouse_id = -1;
+		nState = WMC_GetMouseButtonState(3);
+		nState = nState | STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 3);
+	} else {
+		int nState = WMC_GetMouseButtonState(3);
+		nState = nState & ~STATE_BUTTON_ENTER;
+		WMC_SetMouseButtonState(nState, 3);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
@@ -221,24 +275,48 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	rect.w = 52;
 	rect.h = 52;
 
-	if ( button_1 > 0 ) {
-		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	if (buttons[0] & STATE_BUTTON_ENTER) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
 		SDL_RenderRect(renderer, &rect);
+	} 
+	if (buttons[0] & STATE_BUTTON_DISABLED) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
+		SDL_RenderFillRect(renderer, &rect);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if (button_2 > 0) {
-		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	if (buttons[1] & STATE_BUTTON_ENTER) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
 		SDL_RenderRect(renderer, &rect);
 	}
-	rect.x = rect.x + rect.w + 1;
-	if (button_3 > 0) {
-		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-		SDL_RenderRect(renderer, &rect);
+	if (buttons[1] & STATE_BUTTON_DISABLED) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
+		SDL_RenderFillRect(renderer, &rect);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if (button_4 > 0) {
-		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	if (buttons[2] & STATE_BUTTON_ENTER) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
 		SDL_RenderRect(renderer, &rect);
+	}
+	if (buttons[2] & STATE_BUTTON_DISABLED) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
+		SDL_RenderFillRect(renderer, &rect);
+	}
+	rect.x = rect.x + rect.w + 1;
+	if (buttons[3] & STATE_BUTTON_ENTER) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
+		SDL_RenderRect(renderer, &rect);
+	}
+	if (buttons[3] & STATE_BUTTON_DISABLED) {
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x2f);
+		SDL_RenderFillRect(renderer, &rect);
 	}
 
 	SDL_RenderPresent(renderer);
@@ -404,18 +482,18 @@ int main(int argc, char* argv[])
 				}
 				case SDL_EVENT_MOUSE_MOTION:
 				{
-					capture_mouse_xxx = event.motion.x;
-					capture_mouse_yyy = event.motion.y;
+					coord_capture_mouse_xxx = event.motion.x;
+					coord_capture_mouse_yyy = event.motion.y;
 					break;
 				}
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
-					button_mouse_id = -1;
+					button_down_mouse_id = event.button.button;
 					break;
 				}
 				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
-					button_mouse_id = event.button.button;
+					button_up_mouse_id = event.button.button;
 					break;
 				}
 			}
