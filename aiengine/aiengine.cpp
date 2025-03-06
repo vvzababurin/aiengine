@@ -53,6 +53,7 @@ int window_height = 600;
 
 float capture_mouse_xxx = 0.0f;
 float capture_mouse_yyy = 0.0f;
+int button_mouse_id = -1;
 
 int button_1 = -1;
 int button_2 = -1;
@@ -146,12 +147,20 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 
 	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
 		button_1 = 1;
+		if (button_mouse_id == 1) {
+			button_mouse_id = -1;
+			SDL_Log("Mouse click button_1");
+		}
 	} else {
 		button_1 = -1;
 	}
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
 		button_2 = 1;
+		if (button_mouse_id == 1) {
+			button_mouse_id = -1;
+			SDL_Log("Mouse click button_2");
+		}
 	}
 	else {
 		button_2 = -1;
@@ -159,6 +168,10 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
 		button_3 = 1;
+		if (button_mouse_id == 1) {
+			button_mouse_id = -1;
+			SDL_Log("Mouse click button_3");
+		}
 	}
 	else {
 		button_3 = -1;
@@ -166,6 +179,10 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
 		button_4 = 1;
+		if (button_mouse_id == 1) {
+			button_mouse_id = -1;
+			SDL_Log("Mouse click button_4");
+		}
 	}
 	else {
 		button_4 = -1;
@@ -381,7 +398,6 @@ int main(int argc, char* argv[])
 				}
 				case SDL_EVENT_WINDOW_RESIZED:
 				{
-					// SDL_GetWindowSize(wnd, &window_width, &window_height);
 					window_width = event.window.data1;
 					window_height = event.window.data2;
 					break;
@@ -390,6 +406,16 @@ int main(int argc, char* argv[])
 				{
 					capture_mouse_xxx = event.motion.x;
 					capture_mouse_yyy = event.motion.y;
+					break;
+				}
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				{
+					button_mouse_id = -1;
+					break;
+				}
+				case SDL_EVENT_MOUSE_BUTTON_UP:
+				{
+					button_mouse_id = event.button.button;
 					break;
 				}
 			}
