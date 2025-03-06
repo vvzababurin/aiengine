@@ -214,12 +214,6 @@ int main(int argc, char* argv[])
 			
 		// thread = SDL_CreateThread( WNC_ThreadCallback, "", NULL );
 
-		wnd = SDL_CreateWindow("An SDL3 window", window_width, window_height, 0 );
-		if (!wnd) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow failed: %s\n", SDL_GetError());
-			return -1;
-		}
-
 		int vd_software = -1;
 		int vd_opengl = -1;
 		int vd_opengles2 = -1;
@@ -237,13 +231,19 @@ int main(int argc, char* argv[])
 			SDL_Log("videoDeviceId: %d ( %s )\n", i, SDL_iconv_utf8_locale(deviceName));
 		}
 
-		if (vd_opengles2 == 1 )
+		wnd = SDL_CreateWindow( "An SDL3 window", window_width, window_height, 0 );
+		if (!wnd) {
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow failed: %s\n", SDL_GetError());
+			return -1;
+		}
+
+		if ( vd_opengles2 == 1 )
 			renderer = SDL_CreateRenderer(wnd, "opengles3");
-		else if (vd_opengl == 1)
+		else if ( vd_opengl == 1 )
 			renderer = SDL_CreateRenderer(wnd, "opengl");
-		else if (vd_direct3d == 1)
+		else if ( vd_direct3d == 1 )
 			renderer = SDL_CreateRenderer(wnd, "direct3d");
-		else if (vd_software == 1)
+		else if ( vd_software == 1 )
 			renderer = SDL_CreateRenderer(wnd, "software");
 
 		if (!renderer) {
@@ -272,12 +272,12 @@ int main(int argc, char* argv[])
 		SDL_SetWindowBordered(wnd, true);
 
 		bool border_result = SDL_GetWindowBordersSize(wnd, &top, &left, &bottom, &right);
-		if (!border_result) {
+		if ( !border_result ) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GetWindowBordersSize failed: %s\n", SDL_GetError());
 		}
 
-		bool presentation_result = SDL_SetRenderLogicalPresentation(renderer, window_width, window_height, SDL_LOGICAL_PRESENTATION_DISABLED);
-		if (!presentation_result){
+		bool presentation_result = SDL_SetRenderLogicalPresentation( renderer, window_width, window_height, SDL_LOGICAL_PRESENTATION_DISABLED );
+		if ( !presentation_result ){
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetRenderLogicalPresentation failed: %s\n", SDL_GetError());
 		}
 
@@ -290,9 +290,9 @@ int main(int argc, char* argv[])
 		{
 			SDL_Event event;
 
-			SDL_PollEvent(&event);
+			SDL_PollEvent( &event );
 			
-			switch (event.type)
+			switch ( event.type )
 			{
 				case SDL_EVENT_QUIT:
 				{
@@ -313,19 +313,18 @@ int main(int argc, char* argv[])
 
 		SDL_DestroyRenderer( renderer );
 		SDL_DestroyWindow( wnd );
+		SDL_DestroyTexture( buttons_texture );
 
 		TTF_CloseFont( big_font );
 		TTF_CloseFont( small_font );
 		TTF_DestroyRendererTextEngine( text_engine );
 
-		SDL_DestroyTexture(buttons_texture);
-
-		FQ_PrintQueueInfo( queue );
-
 		SDL_DestroyAudioStream( capture );
 		SDL_DestroyAudioStream( playback );
 
 		SDL_DestroyMutex( mutex );
+
+		FQ_PrintQueueInfo( queue );
 		FQ_DestroyFreeQueue( queue );
 
 		SDL_Quit();
