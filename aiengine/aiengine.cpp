@@ -34,18 +34,30 @@
 struct FreeQueue* queue;
 
 TTF_TextEngine* text_engine;
-TTF_Font* small_font;
-TTF_Font* big_font;
+TTF_Font* font_small;
+TTF_Font* font_big;
 
 const size_t channels_count = 1;
 const size_t data_freq = 44100;
 
 SDL_Mutex* mutex;
 SDL_Texture* buttons_texture;
+
+float width_buttons_texture = 0.0f;
+float height_buttons_texture = 0.0f;
+
 // SDL_Texture* texture;
 
 int window_width = 800;
 int window_height = 600;
+
+float capture_mouse_xxx = 0.0f;
+float capture_mouse_yyy = 0.0f;
+
+int button_1 = -1;
+int button_2 = -1;
+int button_3 = -1;
+int button_4 = -1;
 
 int WMC_ThreadCallback(void* data)
 {
@@ -108,12 +120,59 @@ SDL_FRect WMC_DrawText(SDL_Renderer* renderer, TTF_Font* font, const char* text,
 		}
 		SDL_DestroySurface(ttf_surface);
 		return rect;
-	}
-	else 
-	{
+	} else {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TTF_RenderText_LCD failed: ( %s )\n", SDL_GetError());
 	}
 	return SDL_FRect();
+}
+
+bool WMC_IsInRect( SDL_FRect* r, float x, float y )
+{
+	if ( ( x >= r->x) && ( x <= ( r->x + r->w ) ) && ( y >= r->y ) && ( y <= ( r->y + r->h ) ) ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void WMC_MouseCallback(SDL_Renderer* renderer)
+{	
+	SDL_FRect rect = { 0, 0, 0, 0 };
+
+	rect.x = window_width - (width_buttons_texture + 8.0f);
+	rect.y = 8.0f;
+	rect.w = 52;
+	rect.h = 52;
+
+	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
+		button_1 = 1;
+	} else {
+		button_1 = -1;
+	}
+	rect.x = rect.x + rect.w + 1;
+	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
+		button_2 = 1;
+	}
+	else {
+		button_2 = -1;
+	}
+	rect.x = rect.x + rect.w + 1;
+	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
+		button_3 = 1;
+	}
+	else {
+		button_3 = -1;
+	}
+	rect.x = rect.x + rect.w + 1;
+	if ( WMC_IsInRect(&rect, capture_mouse_xxx, capture_mouse_yyy) ) {
+		button_4 = 1;
+	}
+	else {
+		button_4 = -1;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	// SDL_Log("Mouse: %f;%f", capture_mouse_xxx, capture_mouse_yyy);
 }
 
 void WMC_RenderCallback(SDL_Renderer* renderer)
@@ -128,22 +187,43 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color fg = { 0, 0, 0, 255 };
 	SDL_Color bg = { 255, 255, 255, 255 };
 
-	WMC_DrawText(renderer, small_font, "const char* text", 20.0f, 20.0f, fg, bg);
-	WMC_DrawText(renderer, big_font, "test", 40.0f, 40.0f, fg, bg);
+	WMC_DrawText(renderer, font_small, "const char* text", 20.0f, 20.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, "test", 40.0f, 40.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
-	float w;
-	float h;
+	SDL_GetTextureSize(buttons_texture, &width_buttons_texture, &height_buttons_texture);
 
-	SDL_GetTextureSize(buttons_texture, &w, &h);
-
-	rect.x = window_width - (w + 8);
+	rect.x = window_width - (width_buttons_texture + 8);
 	rect.y = 8;
-	rect.w = w;
-	rect.h = h;
+	rect.w = width_buttons_texture;
+	rect.h = height_buttons_texture;
 
 	SDL_RenderTexture(renderer, buttons_texture, NULL, &rect);
+
+	rect.w = 52;
+	rect.h = 52;
+
+	if ( button_1 > 0 ) {
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+		SDL_RenderRect(renderer, &rect);
+	}
+	rect.x = rect.x + rect.w + 1;
+	if (button_2 > 0) {
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+		SDL_RenderRect(renderer, &rect);
+	}
+	rect.x = rect.x + rect.w + 1;
+	if (button_3 > 0) {
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+		SDL_RenderRect(renderer, &rect);
+	}
+	rect.x = rect.x + rect.w + 1;
+	if (button_4 > 0) {
+		SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+		SDL_RenderRect(renderer, &rect);
+	}
+
 	SDL_RenderPresent(renderer);
 }
 
@@ -231,7 +311,7 @@ int main(int argc, char* argv[])
 			SDL_Log("videoDeviceId: %d ( %s )\n", i, SDL_iconv_utf8_locale(deviceName));
 		}
 
-		wnd = SDL_CreateWindow( "An SDL3 window", window_width, window_height, 0 );
+		wnd = SDL_CreateWindow( "An SDL3 window", window_width, window_height, SDL_WINDOW_MOUSE_CAPTURE);
 		if (!wnd) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow failed: %s\n", SDL_GetError());
 			return -1;
@@ -283,8 +363,8 @@ int main(int argc, char* argv[])
 
 		text_engine = TTF_CreateRendererTextEngine( renderer );
 
-		small_font = TTF_OpenFont("./external_fonts/segoeui.ttf", 8);
-		big_font = TTF_OpenFont("./external_fonts/segoeui.ttf", 12);
+		font_small = TTF_OpenFont("./external_fonts/segoeui.ttf", 8);
+		font_big = TTF_OpenFont("./external_fonts/segoeui.ttf", 12);
 
 		while ( !done ) 
 		{
@@ -306,8 +386,15 @@ int main(int argc, char* argv[])
 					window_height = event.window.data2;
 					break;
 				}
+				case SDL_EVENT_MOUSE_MOTION:
+				{
+					capture_mouse_xxx = event.motion.x;
+					capture_mouse_yyy = event.motion.y;
+					break;
+				}
 			}
 
+			WMC_MouseCallback( renderer );
 			WMC_RenderCallback( renderer );
 		}
 
@@ -315,8 +402,8 @@ int main(int argc, char* argv[])
 		SDL_DestroyWindow( wnd );
 		SDL_DestroyTexture( buttons_texture );
 
-		TTF_CloseFont( big_font );
-		TTF_CloseFont( small_font );
+		TTF_CloseFont( font_big );
+		TTF_CloseFont( font_small );
 		TTF_DestroyRendererTextEngine( text_engine );
 
 		SDL_DestroyAudioStream( capture );
