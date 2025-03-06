@@ -63,6 +63,9 @@ int button_up_mouse_id = -1;
 #define STATE_BUTTON_CLICK		0x04
 #define STATE_BUTTON_DBLCLICK	0x08
 
+int pause_flag_recording = 0;
+int pause_flag_playback = 0;
+
 unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
 int WMC_ThreadCallback(void* data)
@@ -153,77 +156,117 @@ bool WMC_IsInRect( SDL_FRect* r, float x, float y )
 	}
 }
 
+int WMC_GetRecording()
+{
+	return pause_flag_recording;
+}
+
+int WMC_GetPlayback()
+{
+	return pause_flag_playback;
+}
+
+void WMC_SetRecording(int flag)
+{
+	pause_flag_recording = flag;
+}
+
+void WMC_SetPlayback(int flag)
+{
+	pause_flag_playback = flag;
+}
+
 void WMC_MouseButtonClick( unsigned int uiButton )
 {
 	if (uiButton == 0) {
+		// SDL_Log("WMC_ButtonPauseCallback: Mouse Up click Pause");
 		int nState = WMC_GetMouseButtonState(uiButton);
-		if (!(nState & STATE_BUTTON_DISABLED)) {
+		if ( !(nState & STATE_BUTTON_DISABLED) ) {
+			// pause enabled
 			nState = WMC_GetMouseButtonState(0);
-			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);		
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
+			if ( WMC_GetPlayback() == 0) {
+				nState = WMC_GetMouseButtonState(1);
+				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
+				WMC_SetPlayback(0);
+			} else {
+				// playback true
+				nState = WMC_GetMouseButtonState(1);
+				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
+				WMC_SetPlayback(1);
+			}
+			if ( WMC_GetRecording() == 0) {
+				nState = WMC_GetMouseButtonState(3);
+				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
+				WMC_SetRecording(0);
+			} else {
+				// recording true
+				nState = WMC_GetMouseButtonState(3);
+				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
+				WMC_SetRecording(1);
+			}
+			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
+		}		
+	} else if (uiButton == 1) {
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if ( !(nState & STATE_BUTTON_DISABLED) ) {
+			nState = WMC_GetMouseButtonState(1);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
+			nState = WMC_GetMouseButtonState(3);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
+			WMC_SetPlayback(1);
+			WMC_SetRecording(0);
+			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
+		}		
+	} else if (uiButton == 2) {
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if ( !(nState & STATE_BUTTON_DISABLED) ) {
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(1);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
+			WMC_SetPlayback(0);
+			WMC_SetRecording(0);
+			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
-		SDL_Log("WMC_ButtonPauseCallback: Mouse Up click Pause");
-	} else if (uiButton == 1) {
-		int nState = WMC_GetMouseButtonState(uiButton);
-		if (!(nState & STATE_BUTTON_DISABLED)) {
-			nState = WMC_GetMouseButtonState(1);
-			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
-			nState = WMC_GetMouseButtonState(3);
-			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
-			nState = WMC_GetMouseButtonState(0);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 0);
-			nState = WMC_GetMouseButtonState(2);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 2);
-		}
-		SDL_Log("WMC_ButtonPlayCallback: Mouse Up click Play");
-	} else if (uiButton == 2) {
-		int nState = WMC_GetMouseButtonState(uiButton);
-		if (!(nState & STATE_BUTTON_DISABLED)) {
-			// stop is enabled
-			nState = WMC_GetMouseButtonState(2);
-			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
-			nState = WMC_GetMouseButtonState(0);
-			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);
-			nState = WMC_GetMouseButtonState(1);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 1);
-			nState = WMC_GetMouseButtonState(3);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 3);
-		}
-		SDL_Log("WMC_ButtonStopCallback: Mouse Up click Stop");
 	} else if (uiButton == 3) {
 		int nState = WMC_GetMouseButtonState(uiButton);
-		if (!(nState & STATE_BUTTON_DISABLED)) {
-			// record is enabled
+		if ( !(nState & STATE_BUTTON_DISABLED) ) {
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
 			nState = WMC_GetMouseButtonState(1);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(0);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 0);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 2);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
+			WMC_SetPlayback(0);
+			WMC_SetRecording(1);
+			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
-		SDL_Log("WMC_ButtonRecordCallback: Mouse Up click Record");
 	}
 }
 
 void WMC_MouseCallback(SDL_Renderer* renderer)
 {	
 	SDL_FRect rect = { 0, 0, 0, 0 };
-
 	rect.x = window_width - (width_buttons_texture + 8.0f);
 	rect.y = 8.0f;
 	rect.w = 52;
 	rect.h = 52;
-
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(0);
-		if ( ( button_up_mouse_id ) == 1 && !(nState & STATE_BUTTON_DISABLED))
+		if ( ( button_up_mouse_id == 1 ) && !(nState & STATE_BUTTON_DISABLED) )
 			WMC_MouseButtonClick(0);
 		button_up_mouse_id = -1;
 		nState = WMC_GetMouseButtonState(0);
@@ -234,7 +277,6 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		nState = nState &~ STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 0);
 	}
-
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(1);
@@ -246,10 +288,9 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 1);
 	} else {
 		int nState = WMC_GetMouseButtonState(1);
-		nState = nState & ~STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 1);
 	}
-
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(2);
@@ -261,10 +302,9 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 2);
 	} else {
 		int nState = WMC_GetMouseButtonState(2);
-		nState = nState & ~STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 2);
 	}
-
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(3);
@@ -276,12 +316,9 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 3);
 	} else {
 		int nState = WMC_GetMouseButtonState(3);
-		nState = nState & ~STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 3);
 	}
-
-	//////////////////////////////////////////////////////////////////////////////////
-	// SDL_Log("Mouse: %f;%f", capture_mouse_xxx, capture_mouse_yyy);
 }
 
 void WMC_RenderCallback(SDL_Renderer* renderer)
@@ -411,14 +448,17 @@ int main(int argc, char* argv[])
 		if (capture == NULL) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
-			SDL_ResumeAudioStreamDevice( capture ); 
+			WMC_SetRecording(0);
+			// SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
 		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, WMC_PlaybackCallback, NULL );
 		if ( playback == NULL ) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
-			SDL_ResumeAudioStreamDevice( playback ); 
+			WMC_SetPlayback(0);
+			// SDL_PauseAudioStreamDevice(SDL_AudioStream * stream);
+			// SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
 		SDL_Window* wnd = NULL;
