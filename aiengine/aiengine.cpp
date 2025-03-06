@@ -99,13 +99,10 @@ SDL_FRect WMC_DrawText(SDL_Renderer* renderer, TTF_Font* font, const char* text,
 			SDL_GetTextureSize(text_texture, &w, &h);
 			rect.w = w;
 			rect.h = h;
-			if (only_size == false) 
-			{
+			if (only_size == false) {
 				SDL_RenderTexture(renderer, text_texture, NULL, &rect);
 				SDL_DestroyTexture(text_texture);
-			}
-			else 
-			{
+			} else {
 				SDL_DestroyTexture(text_texture);
 			}
 		}
@@ -121,6 +118,8 @@ SDL_FRect WMC_DrawText(SDL_Renderer* renderer, TTF_Font* font, const char* text,
 
 void WMC_RenderCallback(SDL_Renderer* renderer)
 {
+	SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 
 	SDL_RenderLine(renderer, .0f, (float)window_height / 2.0f, (float)window_width, (float)window_height / 2.0f);
@@ -136,6 +135,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	float w;
 	float h;
+
 	SDL_GetTextureSize(buttons_texture, &w, &h);
 
 	rect.x = window_width - (w + 8);
@@ -144,7 +144,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	rect.h = h;
 
 	SDL_RenderTexture(renderer, buttons_texture, NULL, &rect);
-
+	SDL_RenderPresent(renderer);
 }
 
 int main(int argc, char* argv[])
@@ -169,53 +169,42 @@ int main(int argc, char* argv[])
 	}
 
 	mutex = SDL_CreateMutex();
-	if ( !mutex ) 
-	{
+	if ( !mutex ) {
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Couldn't create mutex: ( %s )\n", SDL_GetError() );
 		return -1;
 	}
 
 	SDL_AudioDeviceID * audioDevices = SDL_GetAudioRecordingDevices( &count );
-	if ( audioDevices == NULL ) 
-	{
+	if ( audioDevices == NULL ) {
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
 		return -1;
-	} 
-	else 
-	{
-		for ( int i = 0; i < count; i++ )
-		{
+	} else {
+		for ( int i = 0; i < count; i++ ) {
 			const char* deviceName = SDL_GetAudioDeviceName( audioDevices[i] );
-			SDL_Log( "DeviceId: %d ( %s )\n", audioDevices[i], SDL_iconv_utf8_locale( deviceName ) );
+			SDL_Log( "audioRecordingDeviceId: %d ( %s )\n", audioDevices[i], SDL_iconv_utf8_locale( deviceName ) );
 		}
-
+		
 		SDL_AudioSpec spec;
 		SDL_AudioStream * capture = NULL;
 		SDL_AudioStream * playback = NULL;
-
+		
 		SDL_memset( &spec, 0, sizeof(spec) );
-
+		
 		spec.format = SDL_AUDIO_F32;
 		spec.channels = channels_count;
 		spec.freq = data_freq;
-	
+
 		capture = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &spec, WMC_CaptureCallback, NULL );
-		if (capture == NULL) 
-		{
+		if (capture == NULL) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
-		} 
-		else
-		{
+		} else {
 			SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
 		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, WMC_PlaybackCallback, NULL );
-		if ( playback == NULL )
-		{
+		if ( playback == NULL ) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
-		}
-		else 
-		{
+		} else {
 			SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
@@ -225,13 +214,38 @@ int main(int argc, char* argv[])
 			
 		// thread = SDL_CreateThread( WNC_ThreadCallback, "", NULL );
 
-		wnd = SDL_CreateWindow("An SDL3 window", window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS );
+		wnd = SDL_CreateWindow("An SDL3 window", window_width, window_height, 0 );
 		if (!wnd) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateWindow failed: %s\n", SDL_GetError());
 			return -1;
 		}
 
-		renderer = SDL_CreateRenderer(wnd, NULL);
+		int vd_software = -1;
+		int vd_opengl = -1;
+		int vd_opengles2 = -1;
+		int vd_direct3d = -1;
+
+		int numberof_drivers = SDL_GetNumRenderDrivers();
+		for (int i = 0; i < numberof_drivers; i++) {
+			const char* deviceName = SDL_GetRenderDriver(i);
+
+			if (strcmp(deviceName, "software") == 0) vd_software = 1;
+			if (strcmp(deviceName, "opengl") == 0) vd_opengl = 1;
+			if (strcmp(deviceName, "direct3d") == 0) vd_direct3d = 1;
+			if (strcmp(deviceName, "opengles3") == 0) vd_opengles2 = 1;
+			
+			SDL_Log("videoDeviceId: %d ( %s )\n", i, SDL_iconv_utf8_locale(deviceName));
+		}
+
+		if (vd_opengles2 == 1 )
+			renderer = SDL_CreateRenderer(wnd, "opengles3");
+		else if (vd_opengl == 1)
+			renderer = SDL_CreateRenderer(wnd, "opengl");
+		else if (vd_direct3d == 1)
+			renderer = SDL_CreateRenderer(wnd, "direct3d");
+		else if (vd_software == 1)
+			renderer = SDL_CreateRenderer(wnd, "software");
+
 		if (!renderer) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
 			return -1;
@@ -254,8 +268,6 @@ int main(int argc, char* argv[])
 		int bottom = 0;
 		int right = 0;
 
-		// SDL_GetRenderOutputSize(renderer, &window_width, &window_height);
-
 		SDL_SetWindowResizable(wnd, true);
 		SDL_SetWindowBordered(wnd, true);
 
@@ -264,10 +276,10 @@ int main(int argc, char* argv[])
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GetWindowBordersSize failed: %s\n", SDL_GetError());
 		}
 
-//		bool presentation_result = SDL_SetRenderLogicalPresentation(renderer, window_width, window_height, SDL_LOGICAL_PRESENTATION_DISABLED);
-//		if (!presentation_result){
-//			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetRenderLogicalPresentation failed: %s\n", SDL_GetError());
-//		}
+		bool presentation_result = SDL_SetRenderLogicalPresentation(renderer, window_width, window_height, SDL_LOGICAL_PRESENTATION_DISABLED);
+		if (!presentation_result){
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetRenderLogicalPresentation failed: %s\n", SDL_GetError());
+		}
 
 		text_engine = TTF_CreateRendererTextEngine( renderer );
 
@@ -289,48 +301,14 @@ int main(int argc, char* argv[])
 				}
 				case SDL_EVENT_WINDOW_RESIZED:
 				{
-					SDL_Rect rect = { 0,0,0,0 };
-
-					SDL_ConvertEventToRenderCoordinates(renderer, &event);
-
-					//SDL_RenderCoordinatesFromWindow(0,0, );
-
-					window_width = event.display.data1;
-					window_height = event.display.data2;
-
-
-
-					// window_width = window_width + left + right;
-					// window_height = window_height + top + bottom;
-
-					// rect.x = left;
-					// rect.y = top;
-					// rect.w = window_width + right;
-					// rect.h = window_height + bottom;
-
-					// SDL_SetRenderViewport(renderer, &rect);
-
-					// SDL_SetWindowSize(wnd, window_width, window_height);
-
-					// SDL_Surface* surface = SDL_GetWindowSurface(wnd);
-					// SDL_BlitSurface(image, NULL, surface, NULL);
-
-					// SDL_Palette* palette = SDL_GetSurfacePalette(surface);
-					// const SDL_PixelFormatDetails* format = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_ARGB8888);
-
-					// uint32_t black = SDL_MapRGBA(format, palette, 0, 0, 0, 255);
-
-					// SDL_FillSurfaceRect(surface, NULL, black);
-					// SDL_UpdateWindowSurface(wnd);
+					// SDL_GetWindowSize(wnd, &window_width, &window_height);
+					window_width = event.window.data1;
+					window_height = event.window.data2;
 					break;
 				}
 			}
 
-			SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
-
-			SDL_RenderClear( renderer );
 			WMC_RenderCallback( renderer );
-			SDL_RenderPresent( renderer );
 		}
 
 		SDL_DestroyRenderer( renderer );
