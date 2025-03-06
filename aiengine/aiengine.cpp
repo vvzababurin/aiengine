@@ -63,7 +63,7 @@ int button_up_mouse_id = -1;
 #define STATE_BUTTON_CLICK		0x04
 #define STATE_BUTTON_DBLCLICK	0x08
 
-unsigned int buttons[4] = { STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL, STATE_BUTTON_NORMAL };
+unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
 int WMC_ThreadCallback(void* data)
 {
@@ -144,10 +144,8 @@ unsigned int WMC_GetMouseButtonState(unsigned int uiButton)
 
 bool WMC_IsInRect( SDL_FRect* r, float x, float y )
 {
-	if ( ( x >= r->x) && 
-		( x <= ( r->x + r->w ) ) && 
-		( y >= r->y ) && 
-		( y <= ( r->y + r->h ) ) ) 
+	if ( ( x >= r->x) && ( x <= ( r->x + r->w ) ) && 
+		( y >= r->y ) && ( y <= ( r->y + r->h ) ) ) 
 	{
 		return true;
 	} else {
@@ -158,20 +156,59 @@ bool WMC_IsInRect( SDL_FRect* r, float x, float y )
 void WMC_MouseButtonClick( unsigned int uiButton )
 {
 	if (uiButton == 0) {
-		SDL_Log("WMC_ButtonPauseCallback: Mouse Up click button_1");
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if (!(nState & STATE_BUTTON_DISABLED)) {
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
+			nState = WMC_GetMouseButtonState(1);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
+			nState = WMC_GetMouseButtonState(3);
+			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
+		}
+		SDL_Log("WMC_ButtonPauseCallback: Mouse Up click Pause");
 	} else if (uiButton == 1) {
 		int nState = WMC_GetMouseButtonState(uiButton);
-		if (nState & STATE_BUTTON_DISABLED) {
-			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, uiButton);			
-		} else {
-			WMC_SetMouseButtonState(STATE_BUTTON_DISABLED, uiButton);
-			WMC_SetMouseButtonState(STATE_BUTTON_DISABLED, 3);
+		if (!(nState & STATE_BUTTON_DISABLED)) {
+			nState = WMC_GetMouseButtonState(1);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
+			nState = WMC_GetMouseButtonState(3);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 0);
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 2);
 		}
-		SDL_Log("WMC_ButtonPlayCallback: Mouse Up click button_2");
+		SDL_Log("WMC_ButtonPlayCallback: Mouse Up click Play");
 	} else if (uiButton == 2) {
-		SDL_Log("WMC_ButtonStopCallback: Mouse Up click button_3");
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if (!(nState & STATE_BUTTON_DISABLED)) {
+			// stop is enabled
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);
+			nState = WMC_GetMouseButtonState(1);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 1);
+			nState = WMC_GetMouseButtonState(3);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 3);
+		}
+		SDL_Log("WMC_ButtonStopCallback: Mouse Up click Stop");
 	} else if (uiButton == 3) {
-		SDL_Log("WMC_ButtonRecordCallback: Mouse Up click button_4");
+		int nState = WMC_GetMouseButtonState(uiButton);
+		if (!(nState & STATE_BUTTON_DISABLED)) {
+			// record is enabled
+			nState = WMC_GetMouseButtonState(3);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
+			nState = WMC_GetMouseButtonState(1);
+			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
+			nState = WMC_GetMouseButtonState(0);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 0);
+			nState = WMC_GetMouseButtonState(2);
+			WMC_SetMouseButtonState(nState & ~STATE_BUTTON_DISABLED, 2);
+		}
+		SDL_Log("WMC_ButtonRecordCallback: Mouse Up click Record");
 	}
 }
 
@@ -197,7 +234,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		nState = nState &~ STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 0);
 	}
-	
+
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(1);
@@ -212,6 +249,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		nState = nState & ~STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 1);
 	}
+
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
 		int nState = WMC_GetMouseButtonState(2);
