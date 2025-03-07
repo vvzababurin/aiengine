@@ -46,7 +46,8 @@ SDL_Texture* buttons_texture;
 float width_buttons_texture = 0.0f;
 float height_buttons_texture = 0.0f;
 
-// SDL_Texture* texture;
+SDL_AudioStream* capture = NULL;
+SDL_AudioStream* playback = NULL;
 
 int window_width = 800;
 int window_height = 600;
@@ -180,9 +181,14 @@ void WMC_RecordinCallback(int flag)
 {
 	WMC_SetRecording(flag);
 	if (flag == 1) {
-		SDL_Log("Start recording");
-	} else {
-		SDL_Log("Stop recording");
+		SDL_ResumeAudioStreamDevice(capture);
+		SDL_Log("WMC_RecordinCallback: Start recording");
+	} else if ( flag == 0 ){
+		SDL_PauseAudioStreamDevice(capture);
+		SDL_Log("WMC_RecordinCallback: Stop recording");
+	} else if ( flag == -1 ) {
+		SDL_PauseAudioStreamDevice(capture);
+		SDL_Log("WMC_RecordinCallback: Pause recording");
 	}
 }
 
@@ -190,16 +196,20 @@ void WMC_PlaybackCallback(int flag)
 {
 	WMC_SetPlayback(flag);
 	if (flag == 1) {
-		SDL_Log("Start playback");
-	} else {
-		SDL_Log("Stop playback");
+		SDL_ResumeAudioStreamDevice(playback);
+		SDL_Log("WMC_PlaybackCallback: Start playback");
+	} else if (flag == 0) {
+		SDL_PauseAudioStreamDevice(playback);
+		SDL_Log("WMC_PlaybackCallback: Stop playback");
+	} else if (flag == -1) {
+		SDL_PauseAudioStreamDevice(playback);
+		SDL_Log("WMC_PlaybackCallback: Pause playback");
 	}
 }
 
 void WMC_MouseButtonClick( unsigned int uiButton )
 {
 	if (uiButton == 0) {
-		// SDL_Log("WMC_ButtonPauseCallback: Mouse Up click Pause");
 		int nState = WMC_GetMouseButtonState(uiButton);
 		if ( !(nState & STATE_BUTTON_DISABLED) ) {
 			// pause enabled
@@ -208,6 +218,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
 			if ( WMC_GetPlayback() == 0) {
+				// playback false
 				nState = WMC_GetMouseButtonState(1);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
 				WMC_PlaybackCallback(0);
@@ -215,9 +226,10 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 				// playback true
 				nState = WMC_GetMouseButtonState(1);
 				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
-				WMC_PlaybackCallback(1);
+				WMC_PlaybackCallback(-1);
 			}
 			if ( WMC_GetRecording() == 0) {
+				// recording false
 				nState = WMC_GetMouseButtonState(3);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
 				WMC_RecordinCallback(0);
@@ -225,9 +237,8 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 				// recording true
 				nState = WMC_GetMouseButtonState(3);
 				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
-				WMC_RecordinCallback(1);
+				WMC_RecordinCallback(-1);
 			}
-			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}		
 	} else if (uiButton == 1) {
 		int nState = WMC_GetMouseButtonState(uiButton);
@@ -242,7 +253,6 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
 			WMC_PlaybackCallback(1);
 			WMC_RecordinCallback(0);
-			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}		
 	} else if (uiButton == 2) {
 		int nState = WMC_GetMouseButtonState(uiButton);
@@ -257,7 +267,6 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(0);
-			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
 	} else if (uiButton == 3) {
 		int nState = WMC_GetMouseButtonState(uiButton);
@@ -272,7 +281,6 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(1);
-			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
 	}
 }
@@ -282,9 +290,9 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	SDL_FRect rect = { 0, 0, 0, 0 };
 	rect.x = window_width - (width_buttons_texture + 8.0f);
 	rect.y = 8.0f;
-	rect.w = 52;
-	rect.h = 52;
-	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+	rect.w = 52.0f;
+	rect.h = 52.0f;
+	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(0);
 		if ( ( button_up_mouse_id == 1 ) && !(nState & STATE_BUTTON_DISABLED) )
 			WMC_MouseButtonClick(0);
@@ -298,7 +306,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 0);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(1);
 		if ( ( button_up_mouse_id == 1 ) && !( nState & STATE_BUTTON_DISABLED ) )
 			WMC_MouseButtonClick(1);
@@ -312,7 +320,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 1);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(2);
 		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
 			WMC_MouseButtonClick(2);
@@ -326,7 +334,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 2);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect(&rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy) ) {
+	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(3);
 		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
 			WMC_MouseButtonClick(3);
@@ -360,15 +368,15 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	SDL_GetTextureSize(buttons_texture, &width_buttons_texture, &height_buttons_texture);
 
-	rect.x = window_width - (width_buttons_texture + 8);
-	rect.y = 8;
+	rect.x = window_width - (width_buttons_texture + 8.0f);
+	rect.y = 8.0f;
 	rect.w = width_buttons_texture;
 	rect.h = height_buttons_texture;
 
 	SDL_RenderTexture(renderer, buttons_texture, NULL, &rect);
 
-	rect.w = 52;
-	rect.h = 52;
+	rect.w = 52.0f;
+	rect.h = 52.0f;
 
 	if (buttons[0] & STATE_BUTTON_ENTER) {
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -426,7 +434,6 @@ int main(int argc, char* argv[])
 	_setmode(_fileno(stdout), _O_TEXT);
 	_setmode(_fileno(stdin),  _O_TEXT);
 	_setmode(_fileno(stderr), _O_TEXT);
-
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 #endif
@@ -445,18 +452,19 @@ int main(int argc, char* argv[])
 	}
 
 	SDL_AudioDeviceID * audioDevices = SDL_GetAudioRecordingDevices( &count );
-	if ( audioDevices == NULL ) {
+	if ( audioDevices == NULL ) 
+	{
 		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
 		return -1;
-	} else {
+	} 
+	else 
+	{
 		for ( int i = 0; i < count; i++ ) {
 			const char* deviceName = SDL_GetAudioDeviceName( audioDevices[i] );
 			SDL_Log( "audioRecordingDeviceId: %d ( %s )\n", audioDevices[i], SDL_iconv_utf8_locale( deviceName ) );
 		}
 		
 		SDL_AudioSpec spec;
-		SDL_AudioStream * capture = NULL;
-		SDL_AudioStream * playback = NULL;
 		
 		SDL_memset( &spec, 0, sizeof(spec) );
 		
