@@ -157,29 +157,29 @@ bool WMC_IsInRect( SDL_FRect* r, float x, float y )
 	}
 }
 
-int WMC_GetRecording()
+int WMC_GetRecordingState()
 {
 	return pause_flag_recording;
 }
 
-int WMC_GetPlayback()
+int WMC_GetPlaybackState()
 {
 	return pause_flag_playback;
 }
 
-void WMC_SetRecording(int flag)
+void WMC_SetRecordingState(int flag)
 {
 	pause_flag_recording = flag;
 }
 
-void WMC_SetPlayback(int flag)
+void WMC_SetPlaybackState(int flag)
 {
 	pause_flag_playback = flag;
 }
 
 void WMC_RecordinCallback(int flag)
 {
-	WMC_SetRecording(flag);
+	WMC_SetRecordingState(flag);
 	if (flag == 1) {
 		SDL_ResumeAudioStreamDevice(capture);
 		SDL_Log("WMC_RecordinCallback: Start recording");
@@ -194,7 +194,7 @@ void WMC_RecordinCallback(int flag)
 
 void WMC_PlaybackCallback(int flag)
 {
-	WMC_SetPlayback(flag);
+	WMC_SetPlaybackState(flag);
 	if (flag == 1) {
 		SDL_ResumeAudioStreamDevice(playback);
 		SDL_Log("WMC_PlaybackCallback: Start playback");
@@ -217,7 +217,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 0);		
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 2);
-			if ( WMC_GetPlayback() == 0) {
+			if ( WMC_GetPlaybackState() == 0) {
 				// playback false
 				nState = WMC_GetMouseButtonState(1);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
@@ -228,7 +228,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
 				WMC_PlaybackCallback(-1);
 			}
-			if ( WMC_GetRecording() == 0) {
+			if ( WMC_GetRecordingState() == 0) {
 				// recording false
 				nState = WMC_GetMouseButtonState(3);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
@@ -480,7 +480,7 @@ int main(int argc, char* argv[])
 		if (capture == NULL) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
-			WMC_SetRecording(0);
+			WMC_SetRecordingState(0);
 			// SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
@@ -488,7 +488,7 @@ int main(int argc, char* argv[])
 		if ( playback == NULL ) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
-			WMC_SetPlayback(0);
+			WMC_SetPlaybackState(0);
 			// SDL_PauseAudioStreamDevice(SDL_AudioStream * stream);
 			// SDL_ResumeAudioStreamDevice( playback ); 
 		}
