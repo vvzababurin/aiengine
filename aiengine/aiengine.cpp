@@ -176,6 +176,26 @@ void WMC_SetPlayback(int flag)
 	pause_flag_playback = flag;
 }
 
+void WMC_RecordinCallback(int flag)
+{
+	WMC_SetRecording(flag);
+	if (flag == 1) {
+		SDL_Log("Start recording");
+	} else {
+		SDL_Log("Stop recording");
+	}
+}
+
+void WMC_PlaybackCallback(int flag)
+{
+	WMC_SetPlayback(flag);
+	if (flag == 1) {
+		SDL_Log("Start playback");
+	} else {
+		SDL_Log("Stop playback");
+	}
+}
+
 void WMC_MouseButtonClick( unsigned int uiButton )
 {
 	if (uiButton == 0) {
@@ -190,22 +210,22 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			if ( WMC_GetPlayback() == 0) {
 				nState = WMC_GetMouseButtonState(1);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
-				WMC_SetPlayback(0);
+				WMC_PlaybackCallback(0);
 			} else {
 				// playback true
 				nState = WMC_GetMouseButtonState(1);
 				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
-				WMC_SetPlayback(1);
+				WMC_PlaybackCallback(1);
 			}
 			if ( WMC_GetRecording() == 0) {
 				nState = WMC_GetMouseButtonState(3);
 				WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
-				WMC_SetRecording(0);
+				WMC_RecordinCallback(0);
 			} else {
 				// recording true
 				nState = WMC_GetMouseButtonState(3);
 				WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
-				WMC_SetRecording(1);
+				WMC_RecordinCallback(1);
 			}
 			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}		
@@ -220,8 +240,8 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
-			WMC_SetPlayback(1);
-			WMC_SetRecording(0);
+			WMC_PlaybackCallback(1);
+			WMC_RecordinCallback(0);
 			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}		
 	} else if (uiButton == 2) {
@@ -235,8 +255,8 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
-			WMC_SetPlayback(0);
-			WMC_SetRecording(0);
+			WMC_PlaybackCallback(0);
+			WMC_RecordinCallback(0);
 			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
 	} else if (uiButton == 3) {
@@ -250,8 +270,8 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
-			WMC_SetPlayback(0);
-			WMC_SetRecording(1);
+			WMC_PlaybackCallback(0);
+			WMC_RecordinCallback(1);
 			SDL_Log("recording, playback: %d; %d", WMC_GetRecording(), WMC_GetPlayback());
 		}
 	}
