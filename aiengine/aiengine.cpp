@@ -297,6 +297,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		if ( ( button_up_mouse_id == 1 ) && !(nState & STATE_BUTTON_DISABLED) )
 			WMC_MouseButtonClick(0);
 		button_up_mouse_id = -1;
+		button_down_mouse_id = -1;
 		nState = WMC_GetMouseButtonState(0);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 0);
@@ -311,6 +312,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		if ( ( button_up_mouse_id == 1 ) && !( nState & STATE_BUTTON_DISABLED ) )
 			WMC_MouseButtonClick(1);
 		button_up_mouse_id = -1;
+		button_down_mouse_id = -1;
 		nState = WMC_GetMouseButtonState(1);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 1);
@@ -325,6 +327,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
 			WMC_MouseButtonClick(2);
 		button_up_mouse_id = -1;
+		button_down_mouse_id = -1;
 		nState = WMC_GetMouseButtonState(2);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 2);
@@ -339,6 +342,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
 			WMC_MouseButtonClick(3);
 		button_up_mouse_id = -1;
+		button_down_mouse_id = -1;
 		nState = WMC_GetMouseButtonState(3);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 3);
