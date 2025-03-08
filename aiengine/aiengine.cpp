@@ -451,14 +451,14 @@ int main(int argc, char* argv[])
 
 	mutex = SDL_CreateMutex();
 	if ( !mutex ) {
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "Couldn't create mutex: ( %s )\n", SDL_GetError() );
+		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateMutex failed: ( %s )\n", SDL_GetError() );
 		return -1;
 	}
 
 	SDL_AudioDeviceID * audioDevices = SDL_GetAudioRecordingDevices( &count );
 	if ( audioDevices == NULL ) 
 	{
-		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID is NULL: ( %s )\n", SDL_GetError() );
+		SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_AudioDeviceID failed: ( %s )\n", SDL_GetError() );
 		return -1;
 	} 
 	else 
@@ -481,7 +481,6 @@ int main(int argc, char* argv[])
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			WMC_SetRecordingState(0);
-			// SDL_ResumeAudioStreamDevice( capture ); 
 		}
 
 		playback = SDL_OpenAudioDeviceStream( SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, WMC_PlaybackCallback, NULL );
@@ -489,8 +488,6 @@ int main(int argc, char* argv[])
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to open audio: %s\n", SDL_GetError() );
 		} else {
 			WMC_SetPlaybackState(0);
-			// SDL_PauseAudioStreamDevice(SDL_AudioStream * stream);
-			// SDL_ResumeAudioStreamDevice( playback ); 
 		}
 
 		SDL_Window* wnd = NULL;
@@ -536,7 +533,7 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 
-		SDL_Surface* buttons = IMG_Load("./external_images/buttons.png");
+		SDL_Surface* buttons = IMG_Load("./data/images/buttons.png");
 		if (!buttons) {
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "IMG_Load failed: %s\n", SDL_GetError());
 		}
@@ -568,8 +565,8 @@ int main(int argc, char* argv[])
 
 		text_engine = TTF_CreateRendererTextEngine( renderer );
 
-		font_small = TTF_OpenFont("./external_fonts/segoeui.ttf", 8);
-		font_big = TTF_OpenFont("./external_fonts/segoeui.ttf", 12);
+		font_small = TTF_OpenFont("./data/fonts/segoeui.ttf", 8);
+		font_big = TTF_OpenFont("./data/fonts/segoeui.ttf", 12);
 
 		while ( !done ) 
 		{

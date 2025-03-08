@@ -171,7 +171,15 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="external_images\buttons.png" />
+    <Image Include="data\images\buttons.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="data\fonts\segoeui.ttf" />
+    <Font Include="data\fonts\segoeuib.ttf" />
+    <Font Include="data\fonts\segoeuii.ttf" />
+    <Font Include="data\fonts\segoeuil.ttf" />
+    <Font Include="data\fonts\segoeuisl.ttf" />
+    <Font Include="data\fonts\segoeuiz.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

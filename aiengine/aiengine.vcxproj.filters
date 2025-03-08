@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Файлы ресурсов\images">
+      <UniqueIdentifier>{00107f7a-abd4-45a9-85b9-db56bef5842c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы ресурсов\fonts">
+      <UniqueIdentifier>{f0053fb0-ddd1-48ac-b9f6-09d2a30494bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -37,8 +43,28 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="external_images\buttons.png">
-      <Filter>Файлы ресурсов</Filter>
+    <Font Include="data\fonts\segoeuiz.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\segoeuil.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\segoeui.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\segoeuib.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\segoeuii.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\segoeuisl.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="data\images\buttons.png">
+      <Filter>Файлы ресурсов\images</Filter>
     </Image>
   </ItemGroup>
 </Project>
