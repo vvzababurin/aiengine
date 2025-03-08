@@ -529,18 +529,18 @@ int main(int argc, char* argv[])
 			renderer = SDL_CreateRenderer(wnd, "software");
 
 		if (!renderer) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
+			SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateRenderer failed: %s\n", SDL_GetError() );
 			return -1;
 		}
 
-		SDL_Surface* buttons = IMG_Load("./data/images/buttons.png");
-		if (!buttons) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "IMG_Load failed: %s\n", SDL_GetError());
+		SDL_Surface* buttons = IMG_Load( "./data/images/buttons.png" );
+		if ( !buttons ) {
+			SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "IMG_Load failed: %s\n", SDL_GetError() );
 		}
 
-		buttons_texture = SDL_CreateTextureFromSurface(renderer, buttons);
-		if (!buttons_texture) {
-			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateTextureFromSurface failed: %s\n", SDL_GetError());
+		buttons_texture = SDL_CreateTextureFromSurface( renderer, buttons );
+		if ( !buttons_texture ) {
+			SDL_LogError( SDL_LOG_CATEGORY_APPLICATION, "SDL_CreateTextureFromSurface failed: %s\n", SDL_GetError() );
 		}
 
 		SDL_DestroySurface(buttons);
