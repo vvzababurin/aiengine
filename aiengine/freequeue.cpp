@@ -5,7 +5,7 @@
 
 #include "freequeue.h"
 
-uint32_t _getAvailableRead( struct FreeQueue *queue, uint32_t read_index, uint32_t write_index ) 
+uint32_t _getAvailableRead( struct FQ_FreeQueue *queue, uint32_t read_index, uint32_t write_index ) 
 {  
   if (write_index >= read_index)
     return write_index - read_index;
@@ -13,16 +13,16 @@ uint32_t _getAvailableRead( struct FreeQueue *queue, uint32_t read_index, uint32
   return write_index + queue->buffer_length - read_index;
 }
 
-uint32_t _getAvailableWrite( struct FreeQueue *queue, uint32_t read_index,  uint32_t write_index ) 
+uint32_t _getAvailableWrite( struct FQ_FreeQueue *queue, uint32_t read_index,  uint32_t write_index ) 
 {
   if (write_index >= read_index)
     return queue->buffer_length - write_index + read_index - 1;
   return read_index - write_index - 1;
 }
 
-struct FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count) 
+struct FQ_FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count) 
 {
-  struct FreeQueue *queue = (struct FreeQueue *)malloc(sizeof(struct FreeQueue));
+  struct FQ_FreeQueue *queue = (struct FQ_FreeQueue *)malloc(sizeof(struct FQ_FreeQueue));
   queue->buffer_length = length + 1;
   queue->channel_count = channel_count;
   queue->state = (std::atomic<unsigned int> *)malloc(2 * sizeof(std::atomic<unsigned int>));
@@ -40,7 +40,7 @@ struct FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count)
   return queue;
 }
 
-void FQ_DestroyFreeQueue(struct FreeQueue *queue) 
+void FQ_DestroyFreeQueue(struct FQ_FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {
@@ -54,7 +54,7 @@ void FQ_DestroyFreeQueue(struct FreeQueue *queue)
   }
 }
 
-bool FQ_FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length) 
+bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_length) 
 {
   if ( queue != nullptr ) 
   {
@@ -79,7 +79,7 @@ bool FQ_FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_lengt
   return false;
 }
 
-bool FQ_FreeQueuePushBack(struct FreeQueue* queue, float** input, size_t block_length)
+bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t block_length)
 {
     if (queue != nullptr)
     {
@@ -122,7 +122,7 @@ bool FQ_FreeQueuePushBack(struct FreeQueue* queue, float** input, size_t block_l
     return false;
 }
 
-bool FQ_FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length) 
+bool FQ_FreeQueuePull(struct FQ_FreeQueue *queue, float **output, size_t block_length) 
 {
   if ( queue != nullptr ) 
   {
@@ -146,7 +146,7 @@ bool FQ_FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_leng
   return false;
 }
 
-bool FQ_FreeQueuePullBack(struct FreeQueue* queue, float** output, size_t block_length)
+bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t block_length)
 {
     if (queue != nullptr)
     {
@@ -168,7 +168,7 @@ bool FQ_FreeQueuePullBack(struct FreeQueue* queue, float** output, size_t block_
     return false;
 }
 
-void *FQ_GetFreeQueuePointers( struct FreeQueue* queue, char* data )
+void *FQ_GetFreeQueuePointers( struct FQ_FreeQueue* queue, char* data )
 {
   if ( queue != nullptr ) 
   {
@@ -188,7 +188,7 @@ void *FQ_GetFreeQueuePointers( struct FreeQueue* queue, char* data )
   return 0;
 }
 
-void FQ_PrintQueueInfo(struct FreeQueue *queue) 
+void FQ_PrintQueueInfo(struct FQ_FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {
@@ -213,7 +213,7 @@ void FQ_PrintQueueInfo(struct FreeQueue *queue)
   }
 }
 
-void FQ_PrintQueueAddresses(struct FreeQueue *queue) 
+void FQ_PrintQueueAddresses(struct FQ_FreeQueue *queue) 
 {
   if ( queue != nullptr ) 
   {

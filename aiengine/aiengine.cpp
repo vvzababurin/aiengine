@@ -31,7 +31,7 @@
 
 #include "freequeue.h"
 
-struct FreeQueue* queue;
+struct FQ_FreeQueue* queue;
 
 TTF_TextEngine* text_engine;
 TTF_Font* font_small;
