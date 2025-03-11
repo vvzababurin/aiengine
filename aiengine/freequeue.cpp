@@ -95,11 +95,14 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
 
         /////////////////////////////////////////////////////////////////////////
         // Есть ли место для записи...
-        if ( availableWrite < block_length)     // нет
+        if (availableWrite < block_length)     // нет
         {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++) 
+            for (uint32_t i = 0; i < queue->buffer_length - block_length; i++)
             {
-                memcpy((void*)queue->channel_data[channel], (const void*)&queue->channel_data[channel][block_length], queue->buffer_length * sizeof(float));
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+                {
+                    queue->channel_data[channel][i] = queue->channel_data[channel][i + block_length];
+                }
             }
             for (uint32_t i = 0; i < block_length; i++)
             {

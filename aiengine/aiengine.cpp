@@ -102,7 +102,7 @@ void WMC_CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional
 	data[0] = (float*)malloc(additional_amount);
 	int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
 	if (read_bytes > 0) {
-		FQ_FreeQueuePush(queue, data, read_bytes / sizeof(float));
+		FQ_FreeQueuePushBack(queue, data, read_bytes / sizeof(float));
 	}
 	free( data[0] );
 
