@@ -92,7 +92,6 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
         uint32_t current_write = atomic_load(queue->state + WRITE);
 
         uint32_t availableWrite = _getAvailableWrite(queue, current_read, current_write);
-
         /////////////////////////////////////////////////////////////////////////
         // Есть ли место для записи...
         if (availableWrite < block_length)     // нет
@@ -108,7 +107,8 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
             {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++)
                 {
-                    queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length] = input[channel][i];
+                    int aaa = (current_write - block_length + i) % queue->buffer_length;
+                    queue->channel_data[channel][aaa] = input[channel][i];
                 }
             }
         }
@@ -118,8 +118,7 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
             {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++)
                 {
-                    queue->channel_data[channel][(current_write + i) % queue->buffer_length] =
-                        input[channel][i];
+                    queue->channel_data[channel][(current_write + i) % queue->buffer_length] = input[channel][i];
                 }
             }
             uint32_t next_write = (current_write + block_length) % queue->buffer_length;
@@ -132,7 +131,24 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
 
 bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length)
 {
-    return true;
+    if (queue != nullptr)
+    {
+        uint32_t current_read = atomic_load(queue->state + READ);
+        uint32_t current_write = atomic_load(queue->state + WRITE);
+        if (_getAvailableRead(queue, current_read, current_write) < block_length)
+        {
+            return false;
+        }
+        for (uint32_t i = 0; i < block_length; i++)
+        {
+            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+            {
+                output[channel][i] = queue->channel_data[channel][(current_read + i) % queue->buffer_length];
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 bool FQ_FreeQueuePull(struct FQ_FreeQueue *queue, float **output, size_t block_length) 
@@ -173,7 +189,7 @@ bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t blo
         {
             for (uint32_t channel = 0; channel < queue->channel_count; channel++)
             {
-                output[channel][i] = queue->channel_data[channel][(current_read + i) % queue->buffer_length];
+                output[channel][i] = queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length];
             }
         }
         return true;

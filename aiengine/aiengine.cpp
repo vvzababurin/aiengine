@@ -99,12 +99,16 @@ void WMC_CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional
 	SDL_LockMutex( mutex );
 
 	float* data[channels_count];
-	data[0] = (float*)malloc(additional_amount);
+	for (int i = 0; i < channels_count; i++) {
+		data[0] = (float*)malloc(additional_amount);
+	}
 	int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
 	if (read_bytes > 0) {
 		FQ_FreeQueuePushBack(queue, data, read_bytes / sizeof(float));
 	}
-	free( data[0] );
+	for (int i = 0; i < channels_count; i++) {
+		free(data[0]);
+	}
 
 	SDL_UnlockMutex( mutex );
 }
@@ -438,6 +442,48 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		SDL_RenderFillRect(renderer, &rect);
 	}
 
+	SDL_LockMutex(mutex);
+
+	if (WMC_GetRecordingState() == 1) 
+	{
+		size_t count = data_freq / 25;
+
+		float* data[channels_count];
+		for (int i = 0; i < channels_count; i++) {
+			data[i] = (float*)malloc(count * sizeof(float));
+		}
+
+		bool pull_result = false;
+
+		pull_result = FQ_FreeQueuePullBack(queue, data, count);
+		if (pull_result) {
+			SDL_FPoint* points = new SDL_FPoint[count];
+
+			if (pull_result == true)
+			{
+				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+				SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+
+				float k = (float)count / (float)window_width;
+				for (size_t i = 0; i < channels_count; i++) {
+					for (size_t j = 0; j < count; j++) {
+						points[j].x = (float)j * k;
+						points[j].y = data[i][j] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+					}
+					SDL_RenderLines(renderer, points, (int)count);
+				}
+				// SDL_Log("FQ_FreeQueuePullBack: count = %d; result = %s\n", count, (pull_result == true) ? "true" : "false");
+			}
+			delete[]points;
+		}
+
+		for (int i = 0; i < channels_count; i++) {
+			free(data[i]);
+		}
+	}
+
+	SDL_UnlockMutex(mutex);
+
 	SDL_RenderPresent(renderer);
 }
 
@@ -506,7 +552,7 @@ int main(int argc, char* argv[])
 		SDL_Renderer* renderer = NULL;
 		SDL_Thread* thread = NULL;
 			
-		thread = SDL_CreateThread( WMC_ThreadCallback, "", NULL );
+		// thread = SDL_CreateThread( WMC_ThreadCallback, "getdata", NULL );
 
 		int vd_software = -1;
 		int vd_opengl = -1;
