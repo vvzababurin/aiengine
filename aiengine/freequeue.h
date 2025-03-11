@@ -27,7 +27,9 @@ enum FreeQueueState {
 struct FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count);
 void FQ_DestroyFreeQueue(struct FreeQueue *queue);
 bool FQ_FreeQueuePush(struct FreeQueue *queue, float **input, size_t block_length);
+bool FQ_FreeQueuePushBack(struct FreeQueue* queue, float** input, size_t block_length);
 bool FQ_FreeQueuePull(struct FreeQueue *queue, float **output, size_t block_length);
+bool FQ_FreeQueuePullBack(struct FreeQueue *queue, float **output, size_t block_length);
 void FQ_PrintQueueInfo(struct FreeQueue *queue);
 void FQ_PrintQueueAddresses(struct FreeQueue *queue);
 
