@@ -85,20 +85,38 @@ bool FQ_FreeQueuePushBack(struct FreeQueue* queue, float** input, size_t block_l
     {
         uint32_t current_read = atomic_load(queue->state + READ);
         uint32_t current_write = atomic_load(queue->state + WRITE);
-        if (_getAvailableWrite(queue, current_read, current_write) < block_length)
+
+        uint32_t availableWrite = _getAvailableWrite(queue, current_read, current_write);
+
+        /////////////////////////////////////////////////////////////////////////
+        // Есть ли место для записи...
+        if ( availableWrite < block_length)     // нет
         {
-            return false;
-        }
-        for (uint32_t i = 0; i < block_length; i++)
-        {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+            for (uint32_t channel = 0; channel < queue->channel_count; channel++) 
             {
-                queue->channel_data[channel][(current_write + i) % queue->buffer_length] =
-                    input[channel][i];
+                memcpy((void*)queue->channel_data[channel], (const void*)&queue->channel_data[channel][block_length], queue->buffer_length * sizeof(float));
+            }
+            for (uint32_t i = 0; i < block_length; i++)
+            {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+                {
+                    queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length] = input[channel][i];
+                }
             }
         }
-        uint32_t next_write = (current_write + block_length) % queue->buffer_length;
-        atomic_store(queue->state + WRITE, next_write);
+        else                                    // есть
+        {
+            for (uint32_t i = 0; i < block_length; i++)
+            {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+                {
+                    queue->channel_data[channel][(current_write + i) % queue->buffer_length] =
+                        input[channel][i];
+                }
+            }
+            uint32_t next_write = (current_write + block_length) % queue->buffer_length;
+            atomic_store(queue->state + WRITE, next_write);
+        }
         return true;
     }
     return false;
