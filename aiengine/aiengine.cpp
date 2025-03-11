@@ -506,7 +506,7 @@ int main(int argc, char* argv[])
 		SDL_Renderer* renderer = NULL;
 		SDL_Thread* thread = NULL;
 			
-		// thread = SDL_CreateThread( WNC_ThreadCallback, "", NULL );
+		thread = SDL_CreateThread( WMC_ThreadCallback, "", NULL );
 
 		int vd_software = -1;
 		int vd_opengl = -1;

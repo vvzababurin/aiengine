@@ -54,6 +54,11 @@ void FQ_DestroyFreeQueue(struct FQ_FreeQueue *queue)
   }
 }
 
+bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t block_length)
+{
+    return true;
+}
+
 bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_length) 
 {
   if ( queue != nullptr ) 
@@ -120,6 +125,11 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
         return true;
     }
     return false;
+}
+
+bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length)
+{
+    return true;
 }
 
 bool FQ_FreeQueuePull(struct FQ_FreeQueue *queue, float **output, size_t block_length) 
