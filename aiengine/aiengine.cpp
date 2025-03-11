@@ -179,31 +179,43 @@ void WMC_SetPlaybackState(int flag)
 
 void WMC_RecordinCallback(int flag)
 {
-	WMC_SetRecordingState(flag);
-	if (flag == 1) {
-		SDL_ResumeAudioStreamDevice(capture);
-		SDL_Log("WMC_RecordinCallback: Start recording");
-	} else if ( flag == 0 ){
-		SDL_PauseAudioStreamDevice(capture);
-		SDL_Log("WMC_RecordinCallback: Stop recording");
-	} else if ( flag == -1 ) {
-		SDL_PauseAudioStreamDevice(capture);
-		SDL_Log("WMC_RecordinCallback: Pause recording");
+	int nState = WMC_GetRecordingState();
+	if (flag != nState)
+	{
+		WMC_SetRecordingState(flag);
+		if (flag == 1) {
+			SDL_ResumeAudioStreamDevice(capture);
+			SDL_Log("WMC_RecordinCallback: Start recording");
+		}
+		else if (flag == 0) {
+			SDL_PauseAudioStreamDevice(capture);
+			SDL_Log("WMC_RecordinCallback: Stop recording");
+		}
+		else if (flag == -1) {
+			SDL_PauseAudioStreamDevice(capture);
+			SDL_Log("WMC_RecordinCallback: Pause recording");
+		}
 	}
 }
 
 void WMC_PlaybackCallback(int flag)
 {
-	WMC_SetPlaybackState(flag);
-	if (flag == 1) {
-		SDL_ResumeAudioStreamDevice(playback);
-		SDL_Log("WMC_PlaybackCallback: Start playback");
-	} else if (flag == 0) {
-		SDL_PauseAudioStreamDevice(playback);
-		SDL_Log("WMC_PlaybackCallback: Stop playback");
-	} else if (flag == -1) {
-		SDL_PauseAudioStreamDevice(playback);
-		SDL_Log("WMC_PlaybackCallback: Pause playback");
+	int nState = WMC_GetPlaybackState();
+	if (nState != flag)
+	{
+		WMC_SetPlaybackState(flag);
+		if (flag == 1) {
+			SDL_ResumeAudioStreamDevice(playback);
+			SDL_Log("WMC_PlaybackCallback: Start playback");
+		}
+		else if (flag == 0) {
+			SDL_PauseAudioStreamDevice(playback);
+			SDL_Log("WMC_PlaybackCallback: Stop playback");
+		}
+		else if (flag == -1) {
+			SDL_PauseAudioStreamDevice(playback);
+			SDL_Log("WMC_PlaybackCallback: Pause playback");
+		}
 	}
 }
 
