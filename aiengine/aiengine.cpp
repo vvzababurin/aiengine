@@ -67,7 +67,8 @@ int button_up_mouse_id = -1;
 int pause_flag_recording = 0;
 int pause_flag_playback = 0;
 
-float queue_scale = 1.0f;
+float render_time = 10.0f; 
+float scroll_time = 10.0f;
 
 unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
@@ -387,8 +388,11 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color fg = { 0, 0, 0, 255 };
 	SDL_Color bg = { 255, 255, 255, 255 };
 
-	WMC_DrawText(renderer, font_small, "const char* text", 20.0f, 20.0f, fg, bg);
-	WMC_DrawText(renderer, font_big, "test", 40.0f, 40.0f, fg, bg);
+	char render_time_buff[ 255 ];
+	SDL_snprintf(render_time_buff, 255, "render_time: %f", render_time );
+
+	//WMC_DrawText(renderer, font_small, "const char* text", 20.0f, 20.0f, fg, bg);
+	WMC_DrawText(renderer, font_small, render_time_buff, 10.0f, 10.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
@@ -667,6 +671,13 @@ int main(int argc, char* argv[])
 				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
 					button_up_mouse_id = event.button.button;
+					break;
+				}
+				case SDL_EVENT_MOUSE_WHEEL:
+				{
+					render_time += event.wheel.y / 10.0f;
+					if ( render_time >= 10.0f ) render_time = 10.0f;
+					if ( render_time <= 0.1f ) render_time = 0.1f;
 					break;
 				}
 			}
