@@ -100,27 +100,37 @@ bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t blo
         {
             return false;
         }
-        for (uint32_t i = 0; i < queue->buffer_length - block_length; i++)
-        {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-            {
-                queue->channel_data[channel][(block_length + i) % queue->buffer_length] = queue->channel_data[channel][i % queue->buffer_length];
+        uint32_t availableWrite = _getAvailableWrite(queue, current_read, current_write);
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Есть ли место для записи...
+        if (availableWrite < block_length) { // нет
+            for (uint32_t i = 0; i < queue->buffer_length - (block_length - availableWrite); i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
+                    queue->channel_data[channel][(i + block_length) % queue->buffer_length] = queue->channel_data[channel][i % queue->buffer_length];
+                }
             }
-        }
-        for (uint32_t i = 0; i < block_length; i++)
-        {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-            {
-                queue->channel_data[channel][i % queue->buffer_length] = input[channel][i % queue->buffer_length];
+            for (uint32_t i = 0; i < block_length; i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
+                    queue->channel_data[channel][i % queue->buffer_length] = input[channel][i];
+                }
             }
+            uint32_t next_write = (current_write - block_length + availableWrite) % queue->buffer_length;
+            atomic_store(queue->state + WRITE, next_write);
+        } else { // есть
+            for (uint32_t i = 0; i < block_length; i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
+                    queue->channel_data[channel][(current_write + i) % queue->buffer_length] = input[channel][i];
+                }
+            }
+            uint32_t next_write = (current_write + block_length) % queue->buffer_length;
+            atomic_store(queue->state + WRITE, next_write);
         }
-        uint32_t next_write = (current_write + block_length) % queue->buffer_length;
-        atomic_store(queue->state + WRITE, next_write);
         return true;
     }
     return false;
 }
 
+//*
 bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t block_length)
 {
     if (queue != nullptr)
@@ -162,7 +172,7 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: PULL_DATA_BACK; PULL_DATA_FRONT; PULL_DATA_TO
 
-bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_length)
+bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
 {
     if (queue != nullptr)
     {
@@ -179,50 +189,21 @@ bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_l
                 output[channel][i] = queue->channel_data[channel][(current_read + i) % queue->buffer_length];
             }
         }
-        uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
-        atomic_store(queue->state + READ, nextRead);
-        return true;
-    }
-    return false;
-}
-
-bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length )
-{
-    return false;
-}
-
-bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length)
-{
-    if (queue != nullptr)
-    {
-        uint32_t current_read = atomic_load(queue->state + READ);
-        uint32_t current_write = atomic_load(queue->state + WRITE);
-        if (_getAvailableRead(queue, current_read, current_write) < block_length)
-        {
-            return false;
-        }
-
-        for (uint32_t i = 0; i < queue->buffer_length - block_length; i++)
-        {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-            {
-                queue->channel_data[channel][(block_length + i) % queue->buffer_length] = queue->channel_data[channel][i % queue->buffer_length];
-            }
-        }
-
-        for (uint32_t i = 0; i < block_length; i++)
-        {
-            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-            {
-                output[channel][i] = queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length];
-            }
+        if (increment == true) {
+            uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
+            atomic_store(queue->state + READ, nextRead);
         }
         return true;
     }
     return false;
 }
 
-bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t block_length)
+bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length, bool increment)
+{
+    return false;
+}
+
+bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
 {
     if (queue != nullptr)
     {
@@ -236,8 +217,38 @@ bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t blo
         {
             for (uint32_t channel = 0; channel < queue->channel_count; channel++)
             {
+                output[channel][i] = queue->channel_data[channel][(current_read + i) % queue->buffer_length];
+            }
+        }
+        if (increment == true) {
+            uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
+            atomic_store(queue->state + READ, nextRead);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
+{
+    if (queue != nullptr)
+    {
+        uint32_t current_read = atomic_load(queue->state + READ);
+        uint32_t current_write = atomic_load(queue->state + WRITE);
+        if (_getAvailableRead(queue, current_read, current_write) < block_length)
+        {
+            return false;
+        }
+        for (uint32_t i = 0; i < block_length; i++)
+        {
+            for (uint32_t channel = 0; channel < queue->channel_count; channel++)
+            {
                 output[channel][i] = queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length];
             }
+        }
+        if (increment == true) {
+            uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
+            atomic_store(queue->state + READ, nextRead);
         }
         return true;
     }

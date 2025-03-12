@@ -31,10 +31,10 @@ bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_le
 bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t block_length);
 bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t block_length);
 bool FQ_FreeQueuePushTo(struct FQ_FreeQueue* queue, float** input, size_t begin_index, size_t block_length);
-bool FQ_FreeQueuePull(struct FQ_FreeQueue *queue, float **output, size_t block_length);
-bool FQ_FreeQueuePullBack(struct FQ_FreeQueue *queue, float **output, size_t block_length);
-bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length);
-bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** input, size_t begin_index, size_t block_length);
+bool FQ_FreeQueuePull(struct FQ_FreeQueue *queue, float **output, size_t block_length, bool increment = true);
+bool FQ_FreeQueuePullBack(struct FQ_FreeQueue *queue, float **output, size_t block_length, bool increment = true);
+bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment = true);
+bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** input, size_t begin_index, size_t block_length, bool increment = true);
 void FQ_PrintQueueInfo(struct FQ_FreeQueue *queue);
 void FQ_PrintQueueAddresses(struct FQ_FreeQueue *queue);
 

@@ -86,12 +86,16 @@ void WMC_PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additiona
 	SDL_LockMutex( mutex );
 
 	float* data[channels_count];
-	data[0] = (float*)malloc(additional_amount);
-	bool pull_result = FQ_FreeQueuePull(queue, data, additional_amount / sizeof(float));
+	for (int i = 0; i < channels_count; i++) {
+		data[i] = (float*)malloc(additional_amount);
+	}
+	bool pull_result = FQ_FreeQueuePullFront(queue, data, additional_amount / sizeof(float));
 	if ( pull_result ) {
 		SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
 	} 
-	free( data[0] );
+	for (int i = 0; i < channels_count; i++) {
+		free(data[i]);
+	}
 
 	SDL_UnlockMutex( mutex );
 }
@@ -102,14 +106,14 @@ void WMC_CaptureCallback(void *userdata, SDL_AudioStream *stream, int additional
 
 	float* data[channels_count];
 	for (int i = 0; i < channels_count; i++) {
-		data[0] = (float*)malloc(additional_amount);
+		data[i] = (float*)malloc(additional_amount);
 	}
 	int read_bytes = SDL_GetAudioStreamData(stream, (void*)data[0], additional_amount);
 	if (read_bytes > 0) {
 		FQ_FreeQueuePushBack(queue, data, read_bytes / sizeof(float));
 	}
 	for (int i = 0; i < channels_count; i++) {
-		free(data[0]);
+		free(data[i]);
 	}
 
 	SDL_UnlockMutex( mutex );
@@ -446,7 +450,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	SDL_LockMutex(mutex);
 
-	if (WMC_GetRecordingState() == 1) 
+	if (WMC_GetRecordingState() == 1 || WMC_GetPlaybackState() == 1)
 	{
 		size_t count = data_freq / 25;
 
@@ -457,7 +461,11 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 		bool pull_result = false;
 
-		pull_result = FQ_FreeQueuePullBack(queue, data, count);
+		if( WMC_GetRecordingState() == 1 )
+			pull_result = FQ_FreeQueuePullBack(queue, data, count, false);
+		else if ( WMC_GetPlaybackState() == 1 )
+			pull_result = FQ_FreeQueuePullFront(queue, data, count, false);
+
 		if (pull_result) {
 			SDL_FPoint* points = new SDL_FPoint[count];
 			if (pull_result == true)
