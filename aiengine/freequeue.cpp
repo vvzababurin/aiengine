@@ -83,7 +83,7 @@ bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_le
   return false;
 }
 
-bool FQ_FreeQueuePushFrom(struct FQ_FreeQueue* queue, float** input, size_t begin_index, size_t block_length)
+bool FQ_FreeQueuePushTo(struct FQ_FreeQueue* queue, float** input, size_t begin_index, size_t block_length)
 {
     return false;
 }
@@ -193,7 +193,7 @@ bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_l
     return false;
 }
 
-bool FQ_FreeQueuePullTo(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length )
+bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length )
 {
     return false;
 }
