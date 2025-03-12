@@ -67,6 +67,8 @@ int button_up_mouse_id = -1;
 int pause_flag_recording = 0;
 int pause_flag_playback = 0;
 
+float queue_scale = 1.0f;
+
 unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
 int WMC_ThreadCallback(void* data)
@@ -458,7 +460,6 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		pull_result = FQ_FreeQueuePullBack(queue, data, count);
 		if (pull_result) {
 			SDL_FPoint* points = new SDL_FPoint[count];
-
 			if (pull_result == true)
 			{
 				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
@@ -472,7 +473,6 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 					}
 					SDL_RenderLines(renderer, points, (int)count);
 				}
-				// SDL_Log("FQ_FreeQueuePullBack: count = %d; result = %s\n", count, (pull_result == true) ? "true" : "false");
 			}
 			delete[]points;
 		}
@@ -550,8 +550,8 @@ int main(int argc, char* argv[])
 
 		SDL_Window* wnd = NULL;
 		SDL_Renderer* renderer = NULL;
-		SDL_Thread* thread = NULL;
-			
+
+		// SDL_Thread* thread = NULL;	
 		// thread = SDL_CreateThread( WMC_ThreadCallback, "getdata", NULL );
 
 		int vd_software = -1;
