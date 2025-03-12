@@ -132,29 +132,22 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // ≈сть ли место дл€ записи...
-        if (availableWrite < block_length)     // нет
-        {
-            for (uint32_t i = 0; i < queue->buffer_length - block_length; i++)
-            {
-                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-                {
-                    queue->channel_data[channel][i] = queue->channel_data[channel][i + block_length];
+        if (availableWrite < block_length) { // нет
+            for (uint32_t i = 0; i < queue->buffer_length - (block_length - availableWrite); i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
+                    queue->channel_data[channel][i] = queue->channel_data[channel][i + (block_length - availableWrite) ];
                 }
             }
-            for (uint32_t i = 0; i < block_length; i++)
-            {
-                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-                {
-                    queue->channel_data[channel][(current_write - block_length + i) % queue->buffer_length] = input[channel][i];
+            for (uint32_t i = 0; i < block_length; i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
+                    queue->channel_data[channel][(current_write - (block_length - availableWrite) + i) % queue->buffer_length] = input[channel][i];
                 }
             }
-        }
-        else                                    // есть
-        {
-            for (uint32_t i = 0; i < block_length; i++)
-            {
-                for (uint32_t channel = 0; channel < queue->channel_count; channel++)
-                {
+            uint32_t next_write = (current_write - block_length + availableWrite) % queue->buffer_length;
+            atomic_store(queue->state + WRITE, next_write);
+        } else { // есть
+            for (uint32_t i = 0; i < block_length; i++) {
+                for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
                     queue->channel_data[channel][(current_write + i) % queue->buffer_length] = input[channel][i];
                 }
             }
