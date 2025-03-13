@@ -428,8 +428,8 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	char begin_render_time_buff[ 255 ];
 	SDL_snprintf(begin_render_time_buff, 255, "begin_render_time: %f", begin_render_time);
 
-	WMC_DrawText(renderer, font_small, render_time_buff, 10.0f, 10.0f, fg, bg);
-	WMC_DrawText(renderer, font_small, begin_render_time_buff, 10.0f, 20.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, render_time_buff, 10.0f, 10.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, begin_render_time_buff, 10.0f, 25.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
@@ -494,8 +494,8 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	if (WMC_GetRecordingState() == 1 || WMC_GetPlaybackState() == 1)
 	{
 		size_t render_count = (size_t)((float)data_freq * render_time);
-		size_t result_render_count = 0;
-		size_t actual_render_count = window_width;
+		size_t render_count_result = 0;
+		size_t render_count_actual = window_width;
 
 		//////////////////////////////////////////////////////////////////////////////
 		// size_t count = data_freq / 25;
@@ -507,32 +507,32 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		}
 
 		if (WMC_GetRecordingState() == 1) {
-			result_render_count = FQ_FreeQueuePullBack(queue, data, render_count, false);
+			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
 		} else if (WMC_GetPlaybackState() == 1) {
-			result_render_count = FQ_FreeQueuePullFront(queue, data, render_count, false);
+			render_count_result = FQ_FreeQueuePullFront(queue, data, render_count, false);
 		}
 
-		if (result_render_count > 0) {
+		if (render_count_result > 0) {
 
-			SDL_FPoint* points = new SDL_FPoint[actual_render_count];
+			SDL_FPoint* points = new SDL_FPoint[render_count_actual];
 
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 			SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 			
-			size_t k = (size_t)SDL_truncf( (float)render_count / (float)actual_render_count);
+			float k = (float)SDL_truncf( (float)render_count / (float)render_count_actual);
 
-			actual_render_count = (size_t)((float)result_render_count / (float)k);
-			if (actual_render_count > window_width) actual_render_count = window_width;
+			render_count_actual = (size_t)((float)render_count_result / (float)k);
+			if (render_count_actual > window_width) render_count_actual = window_width;
 
-			if (actual_render_count > 0)
+			if (render_count_actual > 0)
 			{
-				for (size_t j = 0; j < actual_render_count; j++) {
+				for (size_t j = 0; j < render_count_actual; j++) {
 					for (size_t i = 0; i < channels_count; i++) {
 						points[j].x = (float)j;
-						points[j].y = data[i][j * k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+						points[j].y = data[i][j * (int)k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
 					}
 				}
-				SDL_RenderLines(renderer, points, (int)actual_render_count);
+				SDL_RenderLines(renderer, points, (int)render_count_actual);
 			}
 
 			delete[]points;
