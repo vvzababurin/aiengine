@@ -58,17 +58,22 @@ float coord_capture_mouse_yyy = 0.0f;
 int button_down_mouse_id = -1;
 int button_up_mouse_id = -1;
 
+float button_down_mouse_x = -1.0f;
+float button_down_mouse_y = -1.0f;
+
 #define STATE_BUTTON_NORMAL		0x00
 #define STATE_BUTTON_ENTER		0x01
 #define STATE_BUTTON_DISABLED	0x02
 #define STATE_BUTTON_CLICK		0x04
 #define STATE_BUTTON_DBLCLICK	0x08
 
+#define SDL_iconv_locale_utf8(S)    SDL_iconv_string("UTF-8", "", S, SDL_strlen(S)+1)
+
 int pause_flag_recording = 0;
 int pause_flag_playback = 0;
 
 float render_time = 10.0f; 
-float scroll_time = 10.0f;
+float scroll_time = 0.0f;
 
 unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
@@ -302,6 +307,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
+			FQ_FreeQueueClear(queue);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(1);
 		}
@@ -317,10 +323,17 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.h = 52.0f;
 	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(0);
-		if ( ( button_up_mouse_id == 1 ) && !(nState & STATE_BUTTON_DISABLED) )
+		if (button_down_mouse_id == 1) {
+			nState = nState | STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 0);
+		}
+		else if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED) && (nState & STATE_BUTTON_CLICK))
+		{
 			WMC_MouseButtonClick(0);
-		button_up_mouse_id = -1;
-		button_down_mouse_id = -1;
+			nState = WMC_GetMouseButtonState(0);
+			nState = nState &~ STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 0);
+		}
 		nState = WMC_GetMouseButtonState(0);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 0);
@@ -332,10 +345,17 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(1);
-		if ( ( button_up_mouse_id == 1 ) && !( nState & STATE_BUTTON_DISABLED ) )
+		if (button_down_mouse_id == 1) {
+			nState = nState | STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 1);
+		}
+		else if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED) && (nState & STATE_BUTTON_CLICK))
+		{
 			WMC_MouseButtonClick(1);
-		button_up_mouse_id = -1;
-		button_down_mouse_id = -1;
+			nState = WMC_GetMouseButtonState(1);
+			nState = nState &~ STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 1);
+		}
 		nState = WMC_GetMouseButtonState(1);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 1);
@@ -347,10 +367,17 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(2);
-		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
+		if (button_down_mouse_id == 1) {
+			nState = nState | STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 2);
+		}
+		else if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED) && (nState & STATE_BUTTON_CLICK))
+		{
 			WMC_MouseButtonClick(2);
-		button_up_mouse_id = -1;
-		button_down_mouse_id = -1;
+			nState = WMC_GetMouseButtonState(2);
+			nState = nState &~ STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 2);
+		}
 		nState = WMC_GetMouseButtonState(2);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 2);
@@ -362,10 +389,17 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.x = rect.x + rect.w + 1;
 	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
 		int nState = WMC_GetMouseButtonState(3);
-		if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED))
+		if (button_down_mouse_id == 1) {
+			nState = nState | STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 3);
+		}
+		else if ((button_up_mouse_id == 1) && !(nState & STATE_BUTTON_DISABLED) && (nState & STATE_BUTTON_CLICK))
+		{
 			WMC_MouseButtonClick(3);
-		button_up_mouse_id = -1;
-		button_down_mouse_id = -1;
+			nState = WMC_GetMouseButtonState(3);
+			nState = nState &~ STATE_BUTTON_CLICK;
+			WMC_SetMouseButtonState(nState, 3);
+		}
 		nState = WMC_GetMouseButtonState(3);
 		nState = nState | STATE_BUTTON_ENTER;
 		WMC_SetMouseButtonState(nState, 3);
@@ -391,8 +425,11 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	char render_time_buff[ 255 ];
 	SDL_snprintf(render_time_buff, 255, "render_time: %f", render_time );
 
-	//WMC_DrawText(renderer, font_small, "const char* text", 20.0f, 20.0f, fg, bg);
+	char scroll_time_buff[ 255 ];
+	SDL_snprintf(scroll_time_buff, 255, "scroll_time: %f", scroll_time);
+
 	WMC_DrawText(renderer, font_small, render_time_buff, 10.0f, 10.0f, fg, bg);
+	WMC_DrawText(renderer, font_small, scroll_time_buff, 10.0f, 20.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
@@ -633,10 +670,13 @@ int main(int argc, char* argv[])
 			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_SetRenderLogicalPresentation failed: %s\n", SDL_GetError());
 		}
 
-		text_engine = TTF_CreateRendererTextEngine( renderer );
+		text_engine = TTF_CreateRendererTextEngine(renderer);
 
 		font_small = TTF_OpenFont("./data/fonts/segoeui.ttf", 8);
 		font_big = TTF_OpenFont("./data/fonts/segoeui.ttf", 12);
+
+//		font_small = TTF_OpenFont("./data/fonts/segoeui.ttf", 8);
+//		font_big = TTF_OpenFont("./data/fonts/segoeui.ttf", 12);
 
 		while ( !done ) 
 		{
@@ -661,16 +701,29 @@ int main(int argc, char* argv[])
 				{
 					coord_capture_mouse_xxx = event.motion.x;
 					coord_capture_mouse_yyy = event.motion.y;
+					if (button_down_mouse_id != -1) {
+						float k = 10.0f / (float)window_width;
+						float way = (event.motion.x - button_down_mouse_x);
+						scroll_time = way;
+						//if (scroll_time >= 10.0f) scroll_time = 10.0f;
+						//if (scroll_time <= 0.0f) scroll_time = 0.0f;
+					}
 					break;
 				}
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
 					button_down_mouse_id = event.button.button;
+					button_down_mouse_x = event.button.x;
+					button_down_mouse_y = event.button.y;
+					button_up_mouse_id = -1;
 					break;
 				}
 				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
 					button_up_mouse_id = event.button.button;
+					button_down_mouse_id = -1;
+					button_down_mouse_x = -1.0f;
+					button_down_mouse_y = -1.0f;
 					break;
 				}
 				case SDL_EVENT_MOUSE_WHEEL:
@@ -679,7 +732,7 @@ int main(int argc, char* argv[])
 					if ( render_time >= 10.0f ) render_time = 10.0f;
 					if ( render_time <= 0.1f ) render_time = 0.1f;
 					break;
-				}
+				} 
 			}
 
 			WMC_MouseCallback( renderer );

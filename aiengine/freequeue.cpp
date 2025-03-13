@@ -20,6 +20,24 @@ uint32_t _getAvailableWrite( struct FQ_FreeQueue *queue, uint32_t read_index,  u
   return read_index - write_index - 1;
 }
 
+bool FQ_FreeQueueClear(struct FQ_FreeQueue* queue)
+{
+    if (queue != nullptr)
+    {
+        atomic_store(queue->state + READ, 0);
+        atomic_store(queue->state + WRITE, 0);
+        for (uint32_t i = 0; i < queue->channel_count; i++)
+        {
+            for (uint32_t j = 0; j < queue->buffer_length; j++)
+            {
+                queue->channel_data[i][j] = 0.0f;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 struct FQ_FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count) 
 {
   struct FQ_FreeQueue *queue = (struct FQ_FreeQueue *)malloc(sizeof(struct FQ_FreeQueue));
@@ -34,7 +52,7 @@ struct FQ_FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count)
     queue->channel_data[i] = (float *)malloc(queue->buffer_length * sizeof(float));
     for (uint32_t j = 0; j < queue->buffer_length; j++) 
     {
-      queue->channel_data[i][j] = 0;
+      queue->channel_data[i][j] = 0.0f;
     }
   }
   return queue;
