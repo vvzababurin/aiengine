@@ -38,7 +38,7 @@ bool FQ_FreeQueueClear(struct FQ_FreeQueue* queue)
     return false;
 }
 
-struct FQ_FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count) 
+struct FQ_FreeQueue *FQ_FreeQueueCreate(uint32_t length, uint32_t channel_count)
 {
   struct FQ_FreeQueue *queue = (struct FQ_FreeQueue *)malloc(sizeof(struct FQ_FreeQueue));
   queue->buffer_length = length + 1;
@@ -58,7 +58,7 @@ struct FQ_FreeQueue *FQ_CreateFreeQueue(uint32_t length, uint32_t channel_count)
   return queue;
 }
 
-void FQ_DestroyFreeQueue(struct FQ_FreeQueue *queue) 
+void FQ_FreeQueueDestroy(struct FQ_FreeQueue *queue)
 {
   if ( queue != nullptr ) 
   {
@@ -187,10 +187,7 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
     return false;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: PULL_DATA_BACK; PULL_DATA_FRONT; PULL_DATA_TO
-
-bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
+size_t FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
 {
     if (queue != nullptr)
     {
@@ -198,7 +195,7 @@ bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_l
         uint32_t current_write = atomic_load(queue->state + WRITE);
         if (_getAvailableRead(queue, current_read, current_write) < block_length)
         {
-            return false;
+            return 0;
         }
         for (uint32_t i = 0; i < block_length; i++)
         {
@@ -211,25 +208,27 @@ bool FQ_FreeQueuePull(struct FQ_FreeQueue* queue, float** output, size_t block_l
             uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
             atomic_store(queue->state + READ, nextRead);
         }
-        return true;
+        return block_length;
     }
-    return false;
+    return 0;
 }
 
-bool FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length, bool increment)
+size_t FQ_FreeQueuePullFrom(struct FQ_FreeQueue* queue, float** output, size_t begin_index, size_t block_length, bool increment)
 {
-    return false;
+    return 0;
 }
 
-bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
+size_t FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
 {
     if (queue != nullptr)
     {
         uint32_t current_read = atomic_load(queue->state + READ);
         uint32_t current_write = atomic_load(queue->state + WRITE);
-        if (_getAvailableRead(queue, current_read, current_write) < block_length)
+
+        size_t availableRead = _getAvailableRead(queue, current_read, current_write);
+        if (availableRead < block_length)
         {
-            return false;
+            block_length = availableRead;
         }
         for (uint32_t i = 0; i < block_length; i++)
         {
@@ -242,20 +241,22 @@ bool FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t bl
             uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
             atomic_store(queue->state + READ, nextRead);
         }
-        return true;
+        return block_length;
     }
-    return false;
+    return 0;
 }
 
-bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
+size_t FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t block_length, bool increment)
 {
     if (queue != nullptr)
     {
         uint32_t current_read = atomic_load(queue->state + READ);
         uint32_t current_write = atomic_load(queue->state + WRITE);
-        if (_getAvailableRead(queue, current_read, current_write) < block_length)
+
+        size_t availableRead = _getAvailableRead(queue, current_read, current_write);
+        if (availableRead < block_length)
         {
-            return false;
+            block_length = availableRead;
         }
         for (uint32_t i = 0; i < block_length; i++)
         {
@@ -268,9 +269,9 @@ bool FQ_FreeQueuePullBack(struct FQ_FreeQueue* queue, float** output, size_t blo
             uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
             atomic_store(queue->state + READ, nextRead);
         }
-        return true;
+        return block_length;
     }
-    return false;
+    return 0;
 }
 
 void *FQ_GetFreeQueuePointers( struct FQ_FreeQueue* queue, char* data )

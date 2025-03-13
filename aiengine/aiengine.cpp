@@ -67,13 +67,13 @@ float button_down_mouse_y = -1.0f;
 #define STATE_BUTTON_CLICK		0x04
 #define STATE_BUTTON_DBLCLICK	0x08
 
-#define SDL_iconv_locale_utf8(S)    SDL_iconv_string("UTF-8", "", S, SDL_strlen(S)+1)
-
 int pause_flag_recording = 0;
 int pause_flag_playback = 0;
 
+const size_t max_render_time = 10;
+
 float render_time = 10.0f; 
-float scroll_time = 0.0f;
+float begin_render_time = 0.0f;
 
 unsigned int buttons[4] = { STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL, STATE_BUTTON_DISABLED, STATE_BUTTON_NORMAL };
 
@@ -95,9 +95,9 @@ void WMC_PlaybackCallback(void *userdata, SDL_AudioStream *stream, int additiona
 	for (int i = 0; i < channels_count; i++) {
 		data[i] = (float*)malloc(additional_amount);
 	}
-	bool pull_result = FQ_FreeQueuePullFront(queue, data, additional_amount / sizeof(float));
-	if ( pull_result ) {
-		SDL_PutAudioStreamData(stream, (void*)data[0], additional_amount);
+	size_t pull_result = FQ_FreeQueuePullFront(queue, data, additional_amount / sizeof(float));
+	if ( pull_result > 0 ) {
+		SDL_PutAudioStreamData(stream, (void*)data[0], (int)(pull_result * sizeof(float)));
 	} 
 	for (int i = 0; i < channels_count; i++) {
 		free(data[i]);
@@ -423,13 +423,13 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color bg = { 255, 255, 255, 255 };
 
 	char render_time_buff[ 255 ];
-	SDL_snprintf(render_time_buff, 255, "render_time: %f", render_time );
+	SDL_snprintf(render_time_buff, 255, "render_time: %.2f", render_time );
 
-	char scroll_time_buff[ 255 ];
-	SDL_snprintf(scroll_time_buff, 255, "scroll_time: %f", scroll_time);
+	char begin_render_time_buff[ 255 ];
+	SDL_snprintf(begin_render_time_buff, 255, "begin_render_time: %f", begin_render_time);
 
 	WMC_DrawText(renderer, font_small, render_time_buff, 10.0f, 10.0f, fg, bg);
-	WMC_DrawText(renderer, font_small, scroll_time_buff, 10.0f, 20.0f, fg, bg);
+	WMC_DrawText(renderer, font_small, begin_render_time_buff, 10.0f, 20.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
@@ -493,36 +493,48 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	if (WMC_GetRecordingState() == 1 || WMC_GetPlaybackState() == 1)
 	{
-		size_t count = data_freq / 25;
+		size_t render_count = (size_t)((float)data_freq * render_time);
+		size_t result_render_count = 0;
+		size_t actual_render_count = window_width;
+
+		//////////////////////////////////////////////////////////////////////////////
+		// size_t count = data_freq / 25;
 
 		float* data[channels_count];
+
 		for (int i = 0; i < channels_count; i++) {
-			data[i] = (float*)malloc(count * sizeof(float));
+			data[i] = (float*)malloc(render_count * sizeof(float));
 		}
 
-		bool pull_result = false;
+		if (WMC_GetRecordingState() == 1) {
+			result_render_count = FQ_FreeQueuePullBack(queue, data, render_count, false);
+		} else if (WMC_GetPlaybackState() == 1) {
+			result_render_count = FQ_FreeQueuePullFront(queue, data, render_count, false);
+		}
 
-		if( WMC_GetRecordingState() == 1 )
-			pull_result = FQ_FreeQueuePullBack(queue, data, count, false);
-		else if ( WMC_GetPlaybackState() == 1 )
-			pull_result = FQ_FreeQueuePullFront(queue, data, count, false);
+		if (result_render_count > 0) {
 
-		if (pull_result) {
-			SDL_FPoint* points = new SDL_FPoint[count];
-			if (pull_result == true)
+			SDL_FPoint* points = new SDL_FPoint[actual_render_count];
+
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+			SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+			
+			size_t k = (size_t)SDL_truncf( (float)render_count / (float)actual_render_count);
+
+			actual_render_count = (size_t)((float)result_render_count / (float)k);
+			if (actual_render_count > window_width) actual_render_count = window_width;
+
+			if (actual_render_count > 0)
 			{
-				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-				SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-
-				float k = (float)count / (float)window_width;
-				for (size_t i = 0; i < channels_count; i++) {
-					for (size_t j = 0; j < count; j++) {
-						points[j].x = (float)j * k;
-						points[j].y = data[i][j] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+				for (size_t j = 0; j < actual_render_count; j++) {
+					for (size_t i = 0; i < channels_count; i++) {
+						points[j].x = (float)j;
+						points[j].y = data[i][j * k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
 					}
-					SDL_RenderLines(renderer, points, (int)count);
 				}
+				SDL_RenderLines(renderer, points, (int)actual_render_count);
 			}
+
 			delete[]points;
 		}
 
@@ -545,11 +557,12 @@ int main(int argc, char* argv[])
 	_setmode(_fileno(stdout), _O_TEXT);
 	_setmode(_fileno(stdin),  _O_TEXT);
 	_setmode(_fileno(stderr), _O_TEXT);
+
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 #endif
 
-	queue = FQ_CreateFreeQueue(data_freq * 10, channels_count);
+	queue = FQ_FreeQueueCreate(data_freq * max_render_time, channels_count);
 
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
 	if ( !TTF_Init() ) {
@@ -702,9 +715,9 @@ int main(int argc, char* argv[])
 					coord_capture_mouse_xxx = event.motion.x;
 					coord_capture_mouse_yyy = event.motion.y;
 					if (button_down_mouse_id != -1) {
-						float k = 10.0f / (float)window_width;
-						float way = (event.motion.x - button_down_mouse_x);
-						scroll_time = way;
+						float k = (float)max_render_time / (float)window_width;
+						float way = (button_down_mouse_x - event.motion.x);
+						begin_render_time += way;
 						//if (scroll_time >= 10.0f) scroll_time = 10.0f;
 						//if (scroll_time <= 0.0f) scroll_time = 0.0f;
 					}
@@ -753,7 +766,7 @@ int main(int argc, char* argv[])
 		SDL_DestroyMutex( mutex );
 
 		FQ_PrintQueueInfo( queue );
-		FQ_DestroyFreeQueue( queue );
+		FQ_FreeQueueDestroy( queue );
 
 		SDL_Quit();
 	}
