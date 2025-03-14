@@ -279,6 +279,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
+			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(1);
 			WMC_RecordinCallback(0);
 		}		
@@ -293,6 +294,7 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
+			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(0);
 		}
@@ -307,7 +309,8 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
-			FQ_FreeQueueClear(queue);
+			FQ_FreeQueueResetWriteCounter(queue);
+			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(1);
 		}
@@ -493,9 +496,9 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	if (WMC_GetRecordingState() == 1 || WMC_GetPlaybackState() == 1)
 	{
-		size_t render_count = (size_t)((float)data_freq * render_time);
 		size_t render_count_result = 0;
 		size_t render_count_actual = window_width;
+		size_t render_count = (size_t)((float)data_freq * render_time);
 
 		//////////////////////////////////////////////////////////////////////////////
 		// size_t count = data_freq / 25;
@@ -505,37 +508,32 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		for (int i = 0; i < channels_count; i++) {
 			data[i] = (float*)malloc(render_count * sizeof(float));
 		}
-
 		if (WMC_GetRecordingState() == 1) {
 			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
 		} else if (WMC_GetPlaybackState() == 1) {
 			render_count_result = FQ_FreeQueuePullFront(queue, data, render_count, false);
 		}
-
 		if (render_count_result > 0) {
-
 			SDL_FPoint* points = new SDL_FPoint[render_count_actual];
-
-			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-			SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-			
-			float k = (float)SDL_truncf( (float)render_count / (float)render_count_actual);
-
-			render_count_actual = (size_t)((float)render_count_result / (float)k);
-			if (render_count_actual > window_width) render_count_actual = window_width;
-
-			if (render_count_actual > 0)
+			if ( points )
 			{
-				for (size_t j = 0; j < render_count_actual; j++) {
-					for (size_t i = 0; i < channels_count; i++) {
-						points[j].x = (float)j;
-						points[j].y = data[i][j * (int)k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+				SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+				float k = (float)SDL_truncf( (float)render_count / (float)render_count_actual);
+				render_count_actual = (size_t)((float)render_count_result / (float)k);
+				if (render_count_actual > window_width) render_count_actual = window_width;
+				if (render_count_actual > 0)
+				{
+					for (size_t j = 0; j < render_count_actual; j++) {
+						for (size_t i = 0; i < channels_count; i++) {
+							points[j].x = (float)j;
+							points[j].y = data[i][j * (int)k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+						}
 					}
+					SDL_RenderLines(renderer, points, (int)render_count_actual);
 				}
-				SDL_RenderLines(renderer, points, (int)render_count_actual);
+				delete[]points;
 			}
-
-			delete[]points;
 		}
 
 		for (int i = 0; i < channels_count; i++) {
