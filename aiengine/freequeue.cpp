@@ -22,14 +22,11 @@ uint32_t _getAvailableWrite( struct FQ_FreeQueue *queue, uint32_t read_index,  u
 
 bool FQ_FreeQueueClear(struct FQ_FreeQueue* queue)
 {
-    if (queue != nullptr)
-    {
+    if (queue != nullptr) {
         atomic_store(queue->state + READ, 0);
         atomic_store(queue->state + WRITE, 0);
-        for (uint32_t i = 0; i < queue->channel_count; i++)
-        {
-            for (uint32_t j = 0; j < queue->buffer_length; j++)
-            {
+        for (uint32_t i = 0; i < queue->channel_count; i++) {
+            for (uint32_t j = 0; j < queue->buffer_length; j++) {
                 queue->channel_data[i][j] = 0.0f;
             }
         }

@@ -1,4 +1,4 @@
-// aiengine.cpp: определяет точку входа для консольного приложения.
+// aiengine.cpp: РѕРїСЂРµРґРµР»СЏРµС‚ С‚РѕС‡РєСѓ РІС…РѕРґР° РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
@@ -430,10 +430,10 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color bg = { 255, 255, 255, 255 };
 
 	char render_time_buff[ 255 ];
-	SDL_snprintf(render_time_buff, 255, "render_time ываыва: %.2f", render_time );
+	SDL_snprintf(render_time_buff, 255, "Р’СЂРµРјСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ: %.2f", render_time );
 
 	char begin_render_time_buff[ 255 ];
-	SDL_snprintf(begin_render_time_buff, 255, "begin_render_time: %f", begin_render_time);
+	SDL_snprintf(begin_render_time_buff, 255, "РќР°С‡Р°Р»СЊРЅРѕРµ РІСЂРµРјСЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ: %f", begin_render_time);
 
 	WMC_DrawText(renderer, font_big, render_time_buff, 10.0f, 10.0f, fg, bg);
 	WMC_DrawText(renderer, font_big, begin_render_time_buff, 10.0f, 25.0f, fg, bg);
