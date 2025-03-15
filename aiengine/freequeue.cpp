@@ -70,6 +70,20 @@ size_t FQ_FreeQueueGetWriteCounter(struct FQ_FreeQueue* queue)
     return 0;
 }
 
+void FQ_FreeQueueSetReadCounter(struct FQ_FreeQueue* queue, size_t counter)
+{
+    if (queue != nullptr) {
+        atomic_store(queue->state + READ, counter);
+    }
+}
+
+void FQ_FreeQueueSetWriteCounter(struct FQ_FreeQueue* queue, size_t counter)
+{
+    if (queue != nullptr) {
+        atomic_store(queue->state + WRITE, counter);
+    }
+}
+
 struct FQ_FreeQueue *FQ_FreeQueueCreate(uint32_t length, uint32_t channel_count)
 {
   struct FQ_FreeQueue *queue = (struct FQ_FreeQueue *)malloc(sizeof(struct FQ_FreeQueue));

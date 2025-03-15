@@ -30,6 +30,8 @@ bool FQ_FreeQueueResetReadCounter(struct FQ_FreeQueue* queue);
 bool FQ_FreeQueueResetWriteCounter(struct FQ_FreeQueue* queue);
 size_t FQ_FreeQueueGetReadCounter(struct FQ_FreeQueue* queue);
 size_t FQ_FreeQueueGetWriteCounter(struct FQ_FreeQueue* queue);
+void FQ_FreeQueueSetReadCounter(struct FQ_FreeQueue* queue, size_t counter);
+void FQ_FreeQueueSetWriteCounter(struct FQ_FreeQueue* queue, size_t counter);
 void FQ_FreeQueueDestroy(struct FQ_FreeQueue* queue);
 bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_length);
 bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t block_length);
