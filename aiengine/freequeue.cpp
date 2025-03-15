@@ -54,6 +54,21 @@ bool FQ_FreeQueueResetWriteCounter(struct FQ_FreeQueue* queue)
     return false;
 }
 
+size_t FQ_FreeQueueGetReadCounter(struct FQ_FreeQueue* queue)
+{
+    if (queue != nullptr) {
+        return atomic_load(queue->state + READ);
+    }
+    return 0;
+}
+
+size_t FQ_FreeQueueGetWriteCounter(struct FQ_FreeQueue* queue)
+{
+    if (queue != nullptr) {
+        return atomic_load(queue->state + WRITE);
+    }
+    return 0;
+}
 
 struct FQ_FreeQueue *FQ_FreeQueueCreate(uint32_t length, uint32_t channel_count)
 {

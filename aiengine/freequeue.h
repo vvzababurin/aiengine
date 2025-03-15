@@ -28,6 +28,8 @@ struct FQ_FreeQueue *FQ_FreeQueueCreate(uint32_t length, uint32_t channel_count)
 bool FQ_FreeQueueClear(struct FQ_FreeQueue* queue);
 bool FQ_FreeQueueResetReadCounter(struct FQ_FreeQueue* queue);
 bool FQ_FreeQueueResetWriteCounter(struct FQ_FreeQueue* queue);
+size_t FQ_FreeQueueGetReadCounter(struct FQ_FreeQueue* queue);
+size_t FQ_FreeQueueGetWriteCounter(struct FQ_FreeQueue* queue);
 void FQ_FreeQueueDestroy(struct FQ_FreeQueue* queue);
 bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_length);
 bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t block_length);

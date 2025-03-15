@@ -217,18 +217,15 @@ void WMC_RecordinCallback(int flag)
 void WMC_PlaybackCallback(int flag)
 {
 	int nState = WMC_GetPlaybackState();
-	if (nState != flag)
-	{
+	if (nState != flag) {
 		WMC_SetPlaybackState(flag);
 		if (flag == 1) {
 			SDL_ResumeAudioStreamDevice(playback);
 			SDL_Log("WMC_PlaybackCallback: Start playback");
-		}
-		else if (flag == 0) {
+		} else if (flag == 0) {
 			SDL_PauseAudioStreamDevice(playback);
 			SDL_Log("WMC_PlaybackCallback: Stop playback");
-		}
-		else if (flag == -1) {
+		} else if (flag == -1) {
 			SDL_PauseAudioStreamDevice(playback);
 			SDL_Log("WMC_PlaybackCallback: Pause playback");
 		}
@@ -498,12 +495,14 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 	SDL_LockMutex(mutex);
 
-	if (WMC_GetRecordingState() == 1 || WMC_GetPlaybackState() == 1)
+	int playback = WMC_GetPlaybackState();
+	int recording = WMC_GetRecordingState();
+	if (recording == 1 || playback == 0 || playback == 1 || playback == -1 )
 	{
 		size_t render_count_result = 0;
 		size_t render_count_actual = window_width;
 
-		size_t render_count = (size_t)((float)data_freq * render_time);
+		size_t render_count = (size_t)((float)data_freq * (render_time));
 
 		//////////////////////////////////////////////////////////////////////////////
 		// size_t count = data_freq / 25;
@@ -513,9 +512,9 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		for (int i = 0; i < channels_count; i++) {
 			data[i] = (float*)malloc(render_count * sizeof(float));
 		}
-		if (WMC_GetRecordingState() == 1) {
+		if (recording == 1) {
 			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
-		} else if (WMC_GetPlaybackState() == 1) {
+		} else if (playback == 1 || playback == 0 || playback == -1 || playback == 1) {
 			render_count_result = FQ_FreeQueuePullFront(queue, data, render_count, false);
 		}
 		if (render_count_result > 0) {
