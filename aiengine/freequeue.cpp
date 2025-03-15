@@ -1,8 +1,7 @@
-// aiengine.cpp: определяет точку входа для консольного приложения.
+// aiengine.cpp: РѕРїСЂРµРґРµР»СЏРµС‚ С‚РѕС‡РєСѓ РІС…РѕРґР° РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
-
 #include "freequeue.h"
 
 uint32_t _getAvailableRead( struct FQ_FreeQueue *queue, uint32_t read_index, uint32_t write_index ) 
@@ -92,7 +91,7 @@ void FQ_FreeQueueDestroy(struct FQ_FreeQueue *queue)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Места для записи нет, тогда просто выход...
+// РњРµСЃС‚Р° РґР»СЏ Р·Р°РїРёСЃРё РЅРµС‚, С‚РѕРіРґР° РїСЂРѕСЃС‚Рѕ РІС‹С…РѕРґ...
 bool FQ_FreeQueuePush(struct FQ_FreeQueue *queue, float **input, size_t block_length) 
 {
   if ( queue != nullptr ) 
@@ -125,7 +124,7 @@ bool FQ_FreeQueuePushTo(struct FQ_FreeQueue* queue, float** input, size_t begin_
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Места для записи нет, тогда просто выход...
+// РњРµСЃС‚Р° РґР»СЏ Р·Р°РїРёСЃРё РЅРµС‚, С‚РѕРіРґР° РїСЂРѕСЃС‚Рѕ РІС‹С…РѕРґ...
 bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t block_length)
 {
     if (queue != nullptr)
@@ -138,8 +137,8 @@ bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t blo
         }
         uint32_t availableWrite = _getAvailableWrite(queue, current_read, current_write);
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Есть ли место для записи...
-        if (availableWrite < block_length) { // нет
+        // Р•СЃС‚СЊ Р»Рё РјРµСЃС‚Рѕ РґР»СЏ Р·Р°РїРёСЃРё...
+        if (availableWrite < block_length) { // РЅРµС‚
             for (uint32_t i = 0; i < queue->buffer_length - (block_length - availableWrite); i++) {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
                     queue->channel_data[channel][(i + block_length) % queue->buffer_length] = queue->channel_data[channel][i % queue->buffer_length];
@@ -152,7 +151,7 @@ bool FQ_FreeQueuePushFront(struct FQ_FreeQueue* queue, float** input, size_t blo
             }
             uint32_t next_write = (current_write - block_length + availableWrite) % queue->buffer_length;
             atomic_store(queue->state + WRITE, next_write);
-        } else { // есть
+        } else { // РµСЃС‚СЊ
             for (uint32_t i = 0; i < block_length; i++) {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
                     queue->channel_data[channel][(current_write + i) % queue->buffer_length] = input[channel][i];
@@ -177,8 +176,8 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
         uint32_t availableWrite = _getAvailableWrite(queue, current_read, current_write);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Есть ли место для записи...
-        if (availableWrite < block_length) { // нет
+        // Р•СЃС‚СЊ Р»Рё РјРµСЃС‚Рѕ РґР»СЏ Р·Р°РїРёСЃРё...
+        if (availableWrite < block_length) { // РЅРµС‚
             for (uint32_t i = 0; i < queue->buffer_length - (block_length - availableWrite); i++) {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
                     queue->channel_data[channel][i] = queue->channel_data[channel][i + (block_length - availableWrite) ];
@@ -191,7 +190,7 @@ bool FQ_FreeQueuePushBack(struct FQ_FreeQueue* queue, float** input, size_t bloc
             }
             uint32_t next_write = (current_write - block_length + availableWrite) % queue->buffer_length;
             atomic_store(queue->state + WRITE, next_write);
-        } else { // есть
+        } else { // РµСЃС‚СЊ
             for (uint32_t i = 0; i < block_length; i++) {
                 for (uint32_t channel = 0; channel < queue->channel_count; channel++) {
                     queue->channel_data[channel][(current_write + i) % queue->buffer_length] = input[channel][i];

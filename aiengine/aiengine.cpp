@@ -433,7 +433,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_snprintf(render_time_buff, 255, "Время отображения: %.2f", render_time );
 
 	char begin_render_time_buff[ 255 ];
-	SDL_snprintf(begin_render_time_buff, 255, "Начальное время отображения: %f", begin_render_time);
+	SDL_snprintf(begin_render_time_buff, 255, "Начальное время: %f", begin_render_time);
 
 	WMC_DrawText(renderer, font_big, render_time_buff, 10.0f, 10.0f, fg, bg);
 	WMC_DrawText(renderer, font_big, begin_render_time_buff, 10.0f, 25.0f, fg, bg);
@@ -722,7 +722,7 @@ int main(int argc, char* argv[])
 					yyy_coord_capture_mouse = event.motion.y;
 					if (button_down_mouse_id != -1) {
 						float k = (float)max_render_time / (float)window_width;
-						float way = (button_down_mouse_x - event.motion.x) / 1000.0f;
+						float way = (button_down_mouse_x - event.motion.x) / ((float)window_width * 4.0f);
 						begin_render_time += way;
 						if (begin_render_time > 10.0f) begin_render_time = 10.0f;
 						if (begin_render_time < 0.0f) begin_render_time = 0.0f;
