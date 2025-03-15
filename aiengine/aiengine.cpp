@@ -504,9 +504,6 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 
 		size_t render_count = (size_t)((float)data_freq * (render_time));
 
-		//////////////////////////////////////////////////////////////////////////////
-		// size_t count = data_freq / 25;
-
 		float* data[channels_count];
 
 		for (int i = 0; i < channels_count; i++) {
