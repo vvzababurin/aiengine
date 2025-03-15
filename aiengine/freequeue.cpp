@@ -34,24 +34,20 @@ bool FQ_FreeQueueClear(struct FQ_FreeQueue* queue)
     return false;
 }
 
-bool FQ_FreeQueueResetReadCounter(struct FQ_FreeQueue* queue)
+void FQ_FreeQueueResetReadCounter(struct FQ_FreeQueue* queue)
 {
     if (queue != nullptr)
     {
         atomic_store(queue->state + READ, 0);
-        return true;
     }
-    return false;
 }
 
-bool FQ_FreeQueueResetWriteCounter(struct FQ_FreeQueue* queue)
+void FQ_FreeQueueResetWriteCounter(struct FQ_FreeQueue* queue)
 {
     if (queue != nullptr)
     {
         atomic_store(queue->state + WRITE, 0);
-        return true;
     }
-    return false;
 }
 
 size_t FQ_FreeQueueGetReadCounter(struct FQ_FreeQueue* queue)
