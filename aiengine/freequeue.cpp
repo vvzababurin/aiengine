@@ -261,6 +261,7 @@ size_t FQ_FreeQueuePullFront(struct FQ_FreeQueue* queue, float** output, size_t 
         if (increment == true) {
             uint32_t nextRead = (current_read + block_length) % queue->buffer_length;
             atomic_store(queue->state + READ, nextRead);
+            printf("%u", nextRead);
         }
         return block_length;
     }

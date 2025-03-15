@@ -271,6 +271,10 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 	} else if (uiButton == 1) {
 		int nState = WMC_GetMouseButtonState(uiButton);
 		if ( !(nState & STATE_BUTTON_DISABLED) ) {
+			int nRecordState = WMC_GetMouseButtonState(3);
+			if (!(nRecordState & STATE_BUTTON_DISABLED)) {
+				FQ_FreeQueueResetReadCounter(queue);
+			}
 			nState = WMC_GetMouseButtonState(1);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(3);
@@ -279,7 +283,6 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
-			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(1);
 			WMC_RecordinCallback(0);
 		}		
@@ -294,13 +297,16 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 1);
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 3);
-			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(0);
 		}
 	} else if (uiButton == 3) {
 		int nState = WMC_GetMouseButtonState(uiButton);
 		if ( !(nState & STATE_BUTTON_DISABLED) ) {
+			int nPlayState = WMC_GetMouseButtonState(1);
+			if (!(nPlayState & STATE_BUTTON_DISABLED)) {
+				FQ_FreeQueueClear(queue);
+			}
 			nState = WMC_GetMouseButtonState(3);
 			WMC_SetMouseButtonState(nState | STATE_BUTTON_DISABLED, 3);
 			nState = WMC_GetMouseButtonState(1);
@@ -309,8 +315,6 @@ void WMC_MouseButtonClick( unsigned int uiButton )
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 0);
 			nState = WMC_GetMouseButtonState(2);
 			WMC_SetMouseButtonState(nState &~ STATE_BUTTON_DISABLED, 2);
-			FQ_FreeQueueResetWriteCounter(queue);
-			FQ_FreeQueueResetReadCounter(queue);
 			WMC_PlaybackCallback(0);
 			WMC_RecordinCallback(1);
 		}
@@ -426,7 +430,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color bg = { 255, 255, 255, 255 };
 
 	char render_time_buff[ 255 ];
-	SDL_snprintf(render_time_buff, 255, "render_time: %.2f", render_time );
+	SDL_snprintf(render_time_buff, 255, "render_time ûגאûגא: %.2f", render_time );
 
 	char begin_render_time_buff[ 255 ];
 	SDL_snprintf(begin_render_time_buff, 255, "begin_render_time: %f", begin_render_time);
@@ -498,6 +502,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	{
 		size_t render_count_result = 0;
 		size_t render_count_actual = window_width;
+
 		size_t render_count = (size_t)((float)data_freq * render_time);
 
 		//////////////////////////////////////////////////////////////////////////////
@@ -685,6 +690,9 @@ int main(int argc, char* argv[])
 
 		font_small = TTF_OpenFont("./data/fonts/segoeui.ttf", 8);
 		font_big = TTF_OpenFont("./data/fonts/segoeui.ttf", 12);
+
+		TTF_SetFontLanguage(font_small, "ru-RU");
+		TTF_SetFontLanguage(font_big, "ru-RU");
 
 //		font_small = TTF_OpenFont("./data/fonts/segoeui.ttf", 8);
 //		font_big = TTF_OpenFont("./data/fonts/segoeui.ttf", 12);
