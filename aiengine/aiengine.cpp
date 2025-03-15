@@ -52,8 +52,8 @@ SDL_AudioStream* playback = NULL;
 int window_width = 800;
 int window_height = 600;
 
-float coord_capture_mouse_xxx = 0.0f;
-float coord_capture_mouse_yyy = 0.0f;
+float xxx_coord_capture_mouse = 0.0f;
+float yyy_coord_capture_mouse = 0.0f;
 
 int button_down_mouse_id = -1;
 int button_up_mouse_id = -1;
@@ -328,7 +328,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	rect.y = 8.0f;
 	rect.w = 52.0f;
 	rect.h = 52.0f;
-	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
+	if ( WMC_IsInRect( &rect, xxx_coord_capture_mouse, yyy_coord_capture_mouse ) ) {
 		int nState = WMC_GetMouseButtonState(0);
 		if (button_down_mouse_id == 1) {
 			nState = nState | STATE_BUTTON_CLICK;
@@ -350,7 +350,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 0);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
+	if ( WMC_IsInRect( &rect, xxx_coord_capture_mouse, yyy_coord_capture_mouse) ) {
 		int nState = WMC_GetMouseButtonState(1);
 		if (button_down_mouse_id == 1) {
 			nState = nState | STATE_BUTTON_CLICK;
@@ -372,7 +372,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 1);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
+	if ( WMC_IsInRect( &rect, xxx_coord_capture_mouse, yyy_coord_capture_mouse) ) {
 		int nState = WMC_GetMouseButtonState(2);
 		if (button_down_mouse_id == 1) {
 			nState = nState | STATE_BUTTON_CLICK;
@@ -394,7 +394,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 		WMC_SetMouseButtonState(nState, 2);
 	}
 	rect.x = rect.x + rect.w + 1;
-	if ( WMC_IsInRect( &rect, coord_capture_mouse_xxx, coord_capture_mouse_yyy ) ) {
+	if ( WMC_IsInRect( &rect, xxx_coord_capture_mouse, yyy_coord_capture_mouse) ) {
 		int nState = WMC_GetMouseButtonState(3);
 		if (button_down_mouse_id == 1) {
 			nState = nState | STATE_BUTTON_CLICK;
@@ -718,14 +718,14 @@ int main(int argc, char* argv[])
 				}
 				case SDL_EVENT_MOUSE_MOTION:
 				{
-					coord_capture_mouse_xxx = event.motion.x;
-					coord_capture_mouse_yyy = event.motion.y;
+					xxx_coord_capture_mouse = event.motion.x;
+					yyy_coord_capture_mouse = event.motion.y;
 					if (button_down_mouse_id != -1) {
 						float k = (float)max_render_time / (float)window_width;
-						float way = (button_down_mouse_x - event.motion.x);
+						float way = (button_down_mouse_x - event.motion.x) / 1000.0f;
 						begin_render_time += way;
-						//if (scroll_time >= 10.0f) scroll_time = 10.0f;
-						//if (scroll_time <= 0.0f) scroll_time = 0.0f;
+						if (begin_render_time > 10.0f) begin_render_time = 10.0f;
+						if (begin_render_time < 0.0f) begin_render_time = 0.0f;
 					}
 					break;
 				}
