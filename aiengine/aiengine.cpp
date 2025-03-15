@@ -511,7 +511,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		}
 		if (recording == 1) {
 			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
-		} else if (playback == 1 || playback == 0 || playback == -1 || playback == 1) {
+		} else if (playback == 1 || playback == 0 || playback == -1) {
 			render_count_result = FQ_FreeQueuePullFront(queue, data, render_count, false);
 		}
 		if (render_count_result > 0) {
