@@ -69,14 +69,14 @@ size_t FQ_FreeQueueGetWriteCounter(struct FQ_FreeQueue* queue)
 void FQ_FreeQueueSetReadCounter(struct FQ_FreeQueue* queue, size_t counter)
 {
     if (queue != nullptr) {
-        atomic_store(queue->state + READ, counter);
+        atomic_store(queue->state + READ, (unsigned int)counter);
     }
 }
 
 void FQ_FreeQueueSetWriteCounter(struct FQ_FreeQueue* queue, size_t counter)
 {
     if (queue != nullptr) {
-        atomic_store(queue->state + WRITE, counter);
+        atomic_store(queue->state + WRITE, (unsigned int)counter);
     }
 }
 

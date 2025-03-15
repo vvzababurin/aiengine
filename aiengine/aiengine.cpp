@@ -70,7 +70,7 @@ float button_down_mouse_y = -1.0f;
 int pause_flag_recording = 0;
 int pause_flag_playback = 0;
 
-const size_t max_render_time = 10;
+const float max_render_time = 10.0f;
 
 float render_time = 10.0f; 
 float begin_render_time = 0.0f;
@@ -344,6 +344,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	} else {
 		int nState = WMC_GetMouseButtonState(0);
 		nState = nState &~ STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_CLICK;
 		WMC_SetMouseButtonState(nState, 0);
 	}
 	rect.x = rect.x + rect.w + 1;
@@ -366,6 +367,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	} else {
 		int nState = WMC_GetMouseButtonState(1);
 		nState = nState &~ STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_CLICK;
 		WMC_SetMouseButtonState(nState, 1);
 	}
 	rect.x = rect.x + rect.w + 1;
@@ -388,6 +390,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	} else {
 		int nState = WMC_GetMouseButtonState(2);
 		nState = nState &~ STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_CLICK;
 		WMC_SetMouseButtonState(nState, 2);
 	}
 	rect.x = rect.x + rect.w + 1;
@@ -410,6 +413,7 @@ void WMC_MouseCallback(SDL_Renderer* renderer)
 	} else {
 		int nState = WMC_GetMouseButtonState(3);
 		nState = nState &~ STATE_BUTTON_ENTER;
+		nState = nState &~ STATE_BUTTON_CLICK;
 		WMC_SetMouseButtonState(nState, 3);
 	}
 }
@@ -426,14 +430,18 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color fg = { 0, 0, 0, 255 };
 	SDL_Color bg = { 255, 255, 255, 255 };
 
+	char max_render_time_buff[255];
+	SDL_snprintf(max_render_time_buff, 255, "Время записи: %.2f cек.", max_render_time);
+
 	char render_time_buff[ 255 ];
-	SDL_snprintf(render_time_buff, 255, "Время отображения: %.2f", render_time );
+	SDL_snprintf(render_time_buff, 255, "Время отображения: %.2f cек.", render_time );
 
 	char begin_render_time_buff[ 255 ];
-	SDL_snprintf(begin_render_time_buff, 255, "Начальное время: %f", begin_render_time);
+	SDL_snprintf(begin_render_time_buff, 255, "Начальное время: %f cек.", begin_render_time);
 
-	WMC_DrawText(renderer, font_big, render_time_buff, 10.0f, 10.0f, fg, bg);
-	WMC_DrawText(renderer, font_big, begin_render_time_buff, 10.0f, 25.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, max_render_time_buff, 10.0f, 10.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, render_time_buff, 10.0f, 25.0f, fg, bg);
+	WMC_DrawText(renderer, font_big, begin_render_time_buff, 10.0f, 40.0f, fg, bg);
 
 	SDL_FRect rect = { 0, 0, 0, 0 };
 
@@ -561,7 +569,7 @@ int main(int argc, char* argv[])
 	SetConsoleOutputCP(1251);
 #endif
 
-	queue = FQ_FreeQueueCreate(data_freq * max_render_time, channels_count);
+	queue = FQ_FreeQueueCreate(data_freq * (size_t)max_render_time, channels_count);
 
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO);
 	if ( !TTF_Init() ) {
@@ -717,7 +725,7 @@ int main(int argc, char* argv[])
 					xxx_coord_capture_mouse = event.motion.x;
 					yyy_coord_capture_mouse = event.motion.y;
 					if (button_down_mouse_id != -1) {
-						float k = (float)max_render_time / (float)window_width;
+						float k = max_render_time / (float)window_width;
 						float way = (button_down_mouse_x - event.motion.x) / ((float)window_width * 4.0f);
 						begin_render_time += way;
 						if (begin_render_time > 10.0f) begin_render_time = 10.0f;
