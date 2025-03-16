@@ -510,12 +510,12 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		size_t render_count_result = 0;
 		size_t render_count_actual = window_width;
 
-		size_t render_count = (size_t)((float)data_freq * (render_time));
+		size_t render_count = (size_t)( (float)data_freq * render_time );
 
 		float* data[channels_count];
 
 		for (int i = 0; i < channels_count; i++) {
-			data[i] = (float*)SDL_malloc(render_count * sizeof(float));
+			data[i] = (float*)SDL_malloc( render_count * sizeof(float) );
 		}
 		if (recording == 1) {
 			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
