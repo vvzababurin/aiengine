@@ -430,7 +430,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	SDL_Color fg = { 0, 0, 0, 255 };
 	SDL_Color bg = { 255, 255, 255, 255 };
 
-	char max_render_time_buff[255];
+	char max_render_time_buff[ 255 ];
 	SDL_snprintf(max_render_time_buff, 255, "Время записи: %.2f cек.", max_render_time);
 
 	char render_time_buff[ 255 ];
@@ -515,7 +515,7 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 		float* data[channels_count];
 
 		for (int i = 0; i < channels_count; i++) {
-			data[i] = (float*)malloc(render_count * sizeof(float));
+			data[i] = (float*)SDL_malloc(render_count * sizeof(float));
 		}
 		if (recording == 1) {
 			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
@@ -528,15 +528,15 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 			{
 				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 				SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-				float k = (float)SDL_truncf( (float)render_count / (float)render_count_actual);
-				render_count_actual = (size_t)((float)render_count_result / (float)k);
+				size_t k = (size_t)SDL_truncf( (float)render_count / (float)render_count_actual );
+				render_count_actual = (size_t)( (float)render_count_result / (float)k );
 				if (render_count_actual > window_width) render_count_actual = window_width;
-				if (render_count_actual > 0)
+				if (render_count_actual > 0) 
 				{
 					for (size_t j = 0; j < render_count_actual; j++) {
 						for (size_t i = 0; i < channels_count; i++) {
 							points[j].x = (float)j;
-							points[j].y = data[i][j * (int)k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+							points[j].y = data[i][j * k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
 						}
 					}
 					SDL_RenderLines(renderer, points, (int)render_count_actual);
@@ -544,9 +544,8 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 				delete[]points;
 			}
 		}
-
 		for (int i = 0; i < channels_count; i++) {
-			free(data[i]);
+			SDL_free(data[i]);
 		}
 	}
 
@@ -632,10 +631,10 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < numberof_drivers; i++) {
 			const char* deviceName = SDL_GetRenderDriver(i);
 
-			if (strcmp(deviceName, "software") == 0) vd_software = 1;
-			if (strcmp(deviceName, "opengl") == 0) vd_opengl = 1;
-			if (strcmp(deviceName, "direct3d") == 0) vd_direct3d = 1;
-			if (strcmp(deviceName, "opengles3") == 0) vd_opengles2 = 1;
+			if (SDL_strcmp(deviceName, "software") == 0) vd_software = 1;
+			if (SDL_strcmp(deviceName, "opengl") == 0) vd_opengl = 1;
+			if (SDL_strcmp(deviceName, "direct3d") == 0) vd_direct3d = 1;
+			if (SDL_strcmp(deviceName, "opengles3") == 0) vd_opengles2 = 1;
 			
 			SDL_Log("videoDeviceId: %d ( %s )\n", i, SDL_iconv_utf8_locale(deviceName));
 		}

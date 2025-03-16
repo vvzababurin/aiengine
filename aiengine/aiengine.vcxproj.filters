@@ -61,6 +61,24 @@
     <Font Include="data\fonts\segoeuisl.ttf">
       <Filter>Файлы ресурсов\fonts</Filter>
     </Font>
+    <Font Include="data\fonts\arial.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\arialbold.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\courier.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\courier-bold.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\courier-oblique.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
+    <Font Include="data\fonts\timesnewroman.ttf">
+      <Filter>Файлы ресурсов\fonts</Filter>
+    </Font>
   </ItemGroup>
   <ItemGroup>
     <Image Include="data\images\buttons.png">
