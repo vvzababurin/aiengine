@@ -507,41 +507,85 @@ void WMC_RenderCallback(SDL_Renderer* renderer)
 	int recording = WMC_GetRecordingState();
 	if (recording == 1 || playback == 0 || playback == 1 || playback == -1 )
 	{
-		size_t render_count_result = 0;
-		size_t render_count_actual = window_width;
+		size_t renderResultCount = 0;
+		size_t renderActualCount = window_width;
 
-		size_t render_count = (size_t)( (float)data_freq * render_time );
+		// Количество отсчетов
+		size_t renderCount = ( size_t )( ( float )data_freq * render_time );  
+	
+//		static size_t writeCounter = 0;
+		static size_t readCounter = 0;
+//		
+//		size_t tempWriteCounter = writeCounter;
 
-		float* data[channels_count];
+		float* data[ channels_count ];
 
 		for (int i = 0; i < channels_count; i++) {
-			data[i] = (float*)SDL_malloc( render_count * sizeof(float) );
+			data[ i ] = ( float* )SDL_malloc( renderCount * sizeof( float ) );
 		}
-		if (recording == 1) {
-			render_count_result = FQ_FreeQueuePullBack(queue, data, render_count, false);
-		} else if (playback == 1 || playback == 0 || playback == -1) {
-			render_count_result = FQ_FreeQueuePullFront(queue, data, render_count, false);
+
+		if ( recording == 1 ) {
+			// Получение всех данных и результирующее количество отсчетов
+			renderResultCount = FQ_FreeQueuePullBack( queue, data, renderCount, false ); 
+		} else if ( playback == 1 || playback == 0 || playback == -1 ) {
+			// Получение всех данных и результирующее количество отсчетов
+			renderResultCount = FQ_FreeQueuePullFront( queue, data, renderCount, false ); 
 		}
-		if (render_count_result > 0) {
-			SDL_FPoint* points = new SDL_FPoint[render_count_actual];
+
+		if ( renderResultCount > 0 ) {
+
+//			writeCounter = FQ_FreeQueueGetWriteCounter( queue );
+			readCounter = FQ_FreeQueueGetReadCounter( queue );
+
+			SDL_FPoint* points = new SDL_FPoint[ renderActualCount ];
 			if ( points )
 			{
-				SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-				SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-				size_t k = (size_t)SDL_truncf( (float)render_count / (float)render_count_actual );
-				render_count_actual = (size_t)( (float)render_count_result / (float)k );
-				if (render_count_actual > window_width) render_count_actual = window_width;
-				if (render_count_actual > 0) 
+				SDL_SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
+				SDL_SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0xff );
+	
+				// size_t m = rc - temp_rc;
+				// int ndiff = m - k;
+
+				// renderActualCount = ( size_t )( ( float )renderResultCount / ( float )kRender );
+
+				// Отношение количества полученных отсчетов к количеству выводимых отсчетов
+				float kRender = SDL_truncf( ( float )renderCount / ( float )renderActualCount ); 
+
+//				if ( renderActualCount > window_width ) renderActualCount = window_width;
+
+				if ( renderActualCount > 0 ) 
 				{
-					for (size_t j = 0; j < render_count_actual; j++) {
-						for (size_t i = 0; i < channels_count; i++) {
-							points[j].x = (float)j;
-							points[j].y = data[i][j * k] * (float)window_height / 4.0f + (float)window_height / 2.0f;
+					for (size_t i = 0; i < channels_count; i++)
+					{
+						for (size_t j = 0; j > renderActualCount; j++)
+						{
+							float min = 0.0f;
+							float max = 0.0f;
+
+							float vf = 0.0f;
+
+							for (size_t n = 0; n < SDL_ceil(kRender); n++) {
+								if (data[i][(int)((float)j * kRender) + n] > max) max = data[i][(int)((float)j * kRender) + n];
+								if (data[i][(int)((float)j * kRender) + n] < min) min = data[i][(int)((float)j * kRender) + n];
+								if (SDL_fabs(min) > SDL_fabs(max))
+									vf = min;
+								else
+									vf = max;
+							}
+
+							points[j].x = j + window_width / 2.0f;
+
+							if ( points[j].x > ( float )window_width ) points[j].x = points[j].x - ( points[j].x - ( float )window_width );
+							//if ( points[j].x < 0.0f ) points[j].x = 0.0f;
+
+							points[j].y = vf * (float)window_height / 4.0f + (float)window_height / 2.0f;
 						}
 					}
-					SDL_RenderLines(renderer, points, (int)render_count_actual);
+
+					SDL_RenderLines( renderer, points, (int)renderActualCount );
 				}
-				delete[]points;
+
+				delete []points;
 			}
 		}
 		for (int i = 0; i < channels_count; i++) {
@@ -626,6 +670,7 @@ int main(int argc, char* argv[])
 		int vd_opengl = -1;
 		int vd_opengles2 = -1;
 		int vd_direct3d = -1;
+		int vd_vulcan = -1;
 
 		int numberof_drivers = SDL_GetNumRenderDrivers();
 		for (int i = 0; i < numberof_drivers; i++) {
@@ -635,6 +680,7 @@ int main(int argc, char* argv[])
 			if (SDL_strcmp(deviceName, "opengl") == 0) vd_opengl = 1;
 			if (SDL_strcmp(deviceName, "direct3d") == 0) vd_direct3d = 1;
 			if (SDL_strcmp(deviceName, "opengles3") == 0) vd_opengles2 = 1;
+			if (SDL_strcmp(deviceName, "vulcan") == 0) vd_vulcan = 1;
 			
 			SDL_Log("videoDeviceId: %d ( %s )\n", i, SDL_iconv_utf8_locale(deviceName));
 		}
@@ -651,6 +697,8 @@ int main(int argc, char* argv[])
 			renderer = SDL_CreateRenderer(wnd, "opengl");
 		else if ( vd_direct3d == 1 )
 			renderer = SDL_CreateRenderer(wnd, "direct3d");
+		else if ( vd_vulcan == 1 )
+			renderer = SDL_CreateRenderer(wnd, "vulcan");
 		else if ( vd_software == 1 )
 			renderer = SDL_CreateRenderer(wnd, "software");
 
